@@ -1,0 +1,5 @@
+%{
+  "exampple": {:hex, :exampple, "0.3.0", "b117ec6459f5ead3c52ed6b89fcc16a3cfbee2815a5b4a174703da1bb83d5a95", [:mix], [{:gen_state_machine, "~> 2.1.0", [hex: :gen_state_machine, repo: "hexpm", optional: false]}, {:saxy, "~> 1.2.0", [hex: :saxy, repo: "hexpm", optional: false]}], "hexpm", "dc1f5c6ff646777445a4d94aa211f94dc7bcce47caf9f8ef61e1671d6555109d"},
+  "gen_state_machine": {:hex, :gen_state_machine, "2.1.0", "a38b0e53fad812d29ec149f0d354da5d1bc0d7222c3711f3a0bd5aa608b42992", [:mix], [], "hexpm", "ae367038808db25cee2f2c4b8d0531522ea587c4995eb6f96ee73410a60fa06b"},
+  "saxy": {:hex, :saxy, "1.2.0", "da3401bf472d0a1f4b04fd138ff63f3d9055b5e5209cd4a150e01819962c6348", [:mix], [], "hexpm", "c0fe73e8d6328c8a8c8dc1ea432592d52648a0e0e18918385a92bc10dc269790"},
+}

@@ -31,6 +31,32 @@ defmodule Mixite.DummyGroupchat do
       updated_at: ~N[2020-09-23 00:36:20.363444],
       inserted_at: ~N[2020-09-23 00:36:20.363444]
     },
+    "c5f74c1b-11e6-4a81-ab6a-afc598180b5a" => %Groupchat{
+      id: "c5f74c1b-11e6-4a81-ab6a-afc598180b5a",
+      name: "manchester",
+      description: "Manchester University",
+      nodes: @nodes,
+      contact: nil,
+      participants: [
+        {
+          "c4763641-8a00-4e8e-b6de-aaac712481fa",
+          "kathleen-booth",
+          "2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com"
+        },
+        {
+          "b98dd64f-0f2b-4446-8889-3fc7d3f73113",
+          "andrew-booth",
+          "f8e744de-3d1b-4528-9cfd-3fa111f7f626@example.com"
+        },
+        {
+          "3cb92e3e-798b-49c6-a157-2122356e4cea",
+          "alain-turing",
+          "e784345c-4bed-4ce0-9610-e6f57b9ac6f2@example.com"
+        }
+      ],
+      updated_at: ~N[2020-09-23 00:36:20.363444],
+      inserted_at: ~N[2020-09-23 00:36:20.363444]
+    },
     "6535bb5c-732f-4a3b-8329-3923aec636a5" => %Groupchat{
       id: "6535bb5c-732f-4a3b-8329-3923aec636a5",
       name: "prom 2020",
@@ -67,5 +93,13 @@ defmodule Mixite.DummyGroupchat do
     add_nodes = add_nodes -- nodes
     rem_nodes = rem_nodes -- (rem_nodes -- nodes)
     {:ok, {add_nodes, rem_nodes}}
+  end
+
+  def leave(%Groupchat{} = groupchat, user_jid) do
+    Groupchat.is_participant?(groupchat, user_jid)
+  end
+
+  def set_nick(%Groupchat{} = groupchat, user_jid, _nick) do
+    Groupchat.is_participant?(groupchat, user_jid)
   end
 end

@@ -1,6 +1,6 @@
-# Mixite
+# MIXite
 
-**TODO: Add description**
+MIXite is an generic implementation of [XEP-0369](https://xmpp.org/extensions/xep-0369.html)
 
 ## Installation
 

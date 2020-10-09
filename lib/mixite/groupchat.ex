@@ -6,6 +6,7 @@ defmodule Mixite.Groupchat do
   end
 
   alias Exampple.Xmpp.Jid
+  alias Mixite.Groupchat
 
   @type mix_node() :: :presence | :participants | :messages | :config
 
@@ -21,11 +22,12 @@ defmodule Mixite.Groupchat do
   }
 
   @type id :: String.t()
+  @type user_jid :: String.t()
   @type user_id :: String.t()
   @type nick :: String.t()
 
   @type participant_id() :: String.t
-  @type participant() :: {user_id(), nick(), Jid.t()}
+  @type participant() :: {user_id(), nick(), user_jid()}
 
   @typedoc """
   The nodes are values which are going to be in use with the full
@@ -40,8 +42,9 @@ defmodule Mixite.Groupchat do
   @type nodes() :: String.t
 
   @callback get(t()) :: t() | nil
-  @callback join(t(), user_id(), nick(), [nodes()]) :: {participant_id(), [nodes()]}
-  @callback update(t(), user_id(), add :: [nodes()], rem :: [nodes()]) :: boolean()
+  @callback join(t(), user_jid(), nick(), [nodes()]) :: {participant_id(), [nodes()]}
+  @callback update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: boolean()
+  @callback leave(t(), user_jid()) :: boolean()
 
   defstruct [
     id: "",
@@ -71,19 +74,46 @@ defmodule Mixite.Groupchat do
     end
   end
 
+  @spec is_participant?(t(), user_jid()) :: boolean()
+  def is_participant?(%Groupchat{participants: participants}, jid) do
+    Enum.any?(participants, fn {_id, _nick, part_jid} -> part_jid == jid end)
+  end
+
+  @spec split(t(), user_jid()) :: {participant() | nil, t()}
+  def split(%Groupchat{participants: participants} = groupchat, jid) do
+    filter = fn {_, _, user_jid} -> user_jid == jid end
+    case Enum.split_with(participants, filter) do
+      {[], participants} ->
+        {nil, groupchat}
+
+      {[participant], participants} ->
+        {participant, %Groupchat{groupchat | participants: participants}}
+    end
+  end
+
   @spec get(id()) :: Groupchat.t | nil
   def get(id), do: backend().get(id)
 
-  @spec join(t(), user_id(), nick(), [nodes()]) :: {participant_id(), [nodes()]}
-  def join(groupchat, user_id, nick, nodes) do
+  @spec join(t(), user_jid(), nick(), [nodes()]) :: {participant_id(), [nodes()]}
+  def join(groupchat, user_jid, nick, nodes) do
     nodes = nodes -- (nodes -- valid_nodes())
-    backend().join(groupchat, user_id, nick, nodes)
+    backend().join(groupchat, user_jid, nick, nodes)
   end
 
-  @spec update(t(), user_id(), add :: [nodes()], rem :: [nodes()]) :: boolean()
-  def update(groupchat, user_id, add_nodes, rem_nodes) do
+  @spec update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: boolean()
+  def update(groupchat, user_jid, add_nodes, rem_nodes) do
     add_nodes = add_nodes -- (add_nodes -- valid_nodes())
     rem_nodes = rem_nodes -- (rem_nodes -- valid_nodes())
-    backend().update(groupchat, user_id, add_nodes, rem_nodes)
+    backend().update(groupchat, user_jid, add_nodes, rem_nodes)
+  end
+
+  @spec leave(t(), user_jid()) :: boolean()
+  def leave(groupchat, user_jid) do
+    backend().leave(groupchat, user_jid)
+  end
+
+  @spec set_nick(t(), user_jid(), nick()) :: boolean()
+  def set_nick(groupchat, user_jid, nick) do
+    backend().set_nick(groupchat, user_jid, nick)
   end
 end

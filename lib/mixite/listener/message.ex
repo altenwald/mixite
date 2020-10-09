@@ -17,34 +17,46 @@ defmodule Mixite.Listener.Message do
   end
 
   @impl GenStage
+  def handle_events([{:leave, id, from_jid, user_jid, groupchat}], _from, state) do
+    payload =
+      build_node(
+        %Xmlel{
+          name: "retract",
+          attrs: %{"id" => id},
+          children: [
+            %Xmlel{name: "jid", children: [user_jid]}
+          ]
+        }
+      )
+
+    groupchat.participants
+    |> Enum.each(fn {_id, _nick, jid} ->
+      [payload]
+      |> Stanza.message(from_jid, gen_uuid(), jid)
+      |> Component.send()
+    end)
+
+    {:noreply, [], state}
+  end
+
   def handle_events([{:join, id, from_jid, user_jid, nick, groupchat}], _from, state) do
     payload =
-      %Xmlel{
-        name: "event",
-        attrs: %{"xmlns" => "http://jabber.org/protocol/pubsub#event"},
-        children: [
-          %Xmlel{
-            name: "items",
-            attrs: %{"node" => "urn:xmpp:mix:nodes:participants"},
-            children: [
-              %Xmlel{
-                name: "item",
-                attrs: %{"id" => id},
-                children: [
-                  %Xmlel{
-                    name: "participant",
-                    attrs: %{"xmlns" => "urn:xmpp:mix:core:1"},
-                    children: [
-                      %Xmlel{name: "jid", children: [user_jid]},
-                      %Xmlel{name: "nick", children: [nick]}
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+      build_node(
+        %Xmlel{
+          name: "item",
+          attrs: %{"id" => id},
+          children: [
+            %Xmlel{
+              name: "participant",
+              attrs: %{"xmlns" => "urn:xmpp:mix:core:1"},
+              children: [
+                %Xmlel{name: "jid", children: [user_jid]},
+                %Xmlel{name: "nick", children: [nick]}
+              ]
+            }
+          ]
+        }
+      )
 
     [{id, nick, user_jid} | groupchat.participants]
     |> Enum.each(fn {_id, _nick, jid} ->
@@ -54,6 +66,20 @@ defmodule Mixite.Listener.Message do
     end)
 
     {:noreply, [], state}
+  end
+
+  defp build_node(%Xmlel{} = child) do
+    %Xmlel{
+      name: "event",
+      attrs: %{"xmlns" => "http://jabber.org/protocol/pubsub#event"},
+      children: [
+        %Xmlel{
+          name: "items",
+          attrs: %{"node" => "urn:xmpp:mix:nodes:participants"},
+          children: [child]
+        }
+      ]
+    }
   end
 
   if Mix.env() == :test do

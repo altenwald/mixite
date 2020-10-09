@@ -28,7 +28,8 @@ defmodule Mixite.MixProject do
     [
       {:exampple, "~> 0.4"},
       {:gen_stage, "~> 1.0"},
-      {:uuid, "~> 1.1"}
+      {:uuid, "~> 1.1"},
+      {:rexbug, ">= 0.0.0", optional: true}
     ]
   end
 end

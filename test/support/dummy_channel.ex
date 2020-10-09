@@ -1,7 +1,7 @@
-defmodule Mixite.DummyGroupchat do
-  use Mixite.Groupchat
+defmodule Mixite.DummyChannel do
+  use Mixite.Channel
 
-  alias Mixite.Groupchat
+  alias Mixite.Channel
 
   @nodes ~w[
     config
@@ -10,7 +10,7 @@ defmodule Mixite.DummyGroupchat do
     presence
   ]
   @data %{
-    "be89d464-87d1-4351-bdff-a2cdd7bdb975" => %Groupchat{
+    "be89d464-87d1-4351-bdff-a2cdd7bdb975" => %Channel{
       id: "be89d464-87d1-4351-bdff-a2cdd7bdb975",
       name: "pennsylvania",
       description: "Pennsylvania University",
@@ -31,7 +31,7 @@ defmodule Mixite.DummyGroupchat do
       updated_at: ~N[2020-09-23 00:36:20.363444],
       inserted_at: ~N[2020-09-23 00:36:20.363444]
     },
-    "c5f74c1b-11e6-4a81-ab6a-afc598180b5a" => %Groupchat{
+    "c5f74c1b-11e6-4a81-ab6a-afc598180b5a" => %Channel{
       id: "c5f74c1b-11e6-4a81-ab6a-afc598180b5a",
       name: "manchester",
       description: "Manchester University",
@@ -57,7 +57,7 @@ defmodule Mixite.DummyGroupchat do
       updated_at: ~N[2020-09-23 00:36:20.363444],
       inserted_at: ~N[2020-09-23 00:36:20.363444]
     },
-    "6535bb5c-732f-4a3b-8329-3923aec636a5" => %Groupchat{
+    "6535bb5c-732f-4a3b-8329-3923aec636a5" => %Channel{
       id: "6535bb5c-732f-4a3b-8329-3923aec636a5",
       name: "prom 2020",
       description: "online prom!",
@@ -84,22 +84,22 @@ defmodule Mixite.DummyGroupchat do
     @data[id]
   end
 
-  def join(%Groupchat{id: "6535bb5c-732f-4a3b-8329-3923aec636a5"}, _jid, _nick, nodes) do
+  def join(%Channel{id: "6535bb5c-732f-4a3b-8329-3923aec636a5"}, _jid, _nick, nodes) do
     intersect_nodes = Enum.sort(nodes -- (nodes -- @nodes))
     {"92cd9729-7755-4d41-a09b-7105c005aae2", intersect_nodes}
   end
 
-  def update(%Groupchat{nodes: nodes}, _user_id, add_nodes, rem_nodes) do
+  def update(%Channel{nodes: nodes}, _user_id, add_nodes, rem_nodes) do
     add_nodes = add_nodes -- nodes
     rem_nodes = rem_nodes -- (rem_nodes -- nodes)
     {:ok, {add_nodes, rem_nodes}}
   end
 
-  def leave(%Groupchat{} = groupchat, user_jid) do
-    Groupchat.is_participant?(groupchat, user_jid)
+  def leave(%Channel{} = channel, user_jid) do
+    Channel.is_participant?(channel, user_jid)
   end
 
-  def set_nick(%Groupchat{} = groupchat, user_jid, _nick) do
-    Groupchat.is_participant?(groupchat, user_jid)
+  def set_nick(%Channel{} = channel, user_jid, _nick) do
+    Channel.is_participant?(channel, user_jid)
   end
 end

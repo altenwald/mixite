@@ -6,7 +6,7 @@ defmodule Mixite.Xmpp.PubsubController do
   alias Exampple.Router.Conn
   alias Exampple.Xml.Xmlel
   alias Exampple.Xmpp.Jid
-  alias Mixite.Groupchat
+  alias Mixite.Channel
 
   def get(conn, [%Xmlel{children: [%Xmlel{attrs: %{"node" => node}}]}]) do
     process_node(conn, node)
@@ -33,21 +33,21 @@ defmodule Mixite.Xmpp.PubsubController do
     [%Xmlel{name: "field", attrs: attrs, children: children}]
   end
 
-  def process_node(%Conn{to_jid: %Jid{node: channel}} = conn, "urn:xmpp:mix:nodes:info") when channel != "" do
-    if groupchat = Groupchat.get(channel) do
+  def process_node(%Conn{to_jid: %Jid{node: channel_id}} = conn, "urn:xmpp:mix:nodes:info") when channel_id != "" do
+    if channel = Channel.get(channel_id) do
       item =
         %Xmlel{
           name: "item",
-          attrs: %{"id" => to_string(groupchat.updated_at)},
+          attrs: %{"id" => to_string(channel.updated_at)},
           children: [
             %Xmlel{
               name: "x",
               attrs: %{"xmlns" => "jabber:x:data", "type" => "result"},
               children:
                 field("FORM_TYPE", "hidden", "urn:xmpp:mix:core:1") ++
-                field("Name", groupchat.name) ++
-                field("Description", groupchat.description) ++
-                field("Contact", groupchat.contact)
+                field("Name", channel.name) ++
+                field("Description", channel.description) ++
+                field("Contact", channel.contact)
             }
           ]
         }
@@ -60,10 +60,10 @@ defmodule Mixite.Xmpp.PubsubController do
     end
   end
 
-  def process_node(%Conn{to_jid: %Jid{node: channel}} = conn, "urn:xmpp:mix:nodes:participants") when channel != "" do
-    if groupchat = Groupchat.get(channel) do
+  def process_node(%Conn{to_jid: %Jid{node: channel_id}} = conn, "urn:xmpp:mix:nodes:participants") when channel_id != "" do
+    if channel = Channel.get(channel_id) do
       items =
-        for {id, nick, jid} <- groupchat.participants do
+        for {id, nick, jid} <- channel.participants do
           %Xmlel{
             name: "item",
             attrs: %{"id" => id},

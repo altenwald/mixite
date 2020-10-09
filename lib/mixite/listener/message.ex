@@ -17,7 +17,7 @@ defmodule Mixite.Listener.Message do
   end
 
   @impl GenStage
-  def handle_events([{:leave, id, from_jid, user_jid, groupchat}], _from, state) do
+  def handle_events([{:leave, id, from_jid, user_jid, channel}], _from, state) do
     payload =
       build_node(
         %Xmlel{
@@ -29,7 +29,7 @@ defmodule Mixite.Listener.Message do
         }
       )
 
-    groupchat.participants
+    channel.participants
     |> Enum.each(fn {_id, _nick, jid} ->
       [payload]
       |> Stanza.message(from_jid, gen_uuid(), jid)
@@ -39,7 +39,7 @@ defmodule Mixite.Listener.Message do
     {:noreply, [], state}
   end
 
-  def handle_events([{:join, id, from_jid, user_jid, nick, groupchat}], _from, state) do
+  def handle_events([{:join, id, from_jid, user_jid, nick, channel}], _from, state) do
     payload =
       build_node(
         %Xmlel{
@@ -58,7 +58,7 @@ defmodule Mixite.Listener.Message do
         }
       )
 
-    [{id, nick, user_jid} | groupchat.participants]
+    [{id, nick, user_jid} | channel.participants]
     |> Enum.each(fn {_id, _nick, jid} ->
       [payload]
       |> Stanza.message(from_jid, gen_uuid(), jid)

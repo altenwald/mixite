@@ -6,13 +6,13 @@ defmodule Mixite.Xmpp.DiscoveryController do
 
   alias Exampple.Router.Conn
   alias Exampple.Xmpp.Jid
-  alias Mixite.Groupchat
+  alias Mixite.Channel
 
-  def info(%Conn{to_jid: %Jid{node: channel}} = conn, _query) when channel != "" do
-    if groupchat = Groupchat.get(channel) do
+  def info(%Conn{to_jid: %Jid{node: channel_id}} = conn, _query) when channel_id != "" do
+    if channel = Channel.get(channel_id) do
       payload = ~x[
         <query xmlns='http://jabber.org/protocol/disco#info'>
-          <identity category='conference' type='mix' name='#{groupchat.name}'/>
+          <identity category='conference' type='mix' name='#{channel.name}'/>
           <feature var='http://jabber.org/protocol/disco#info'/>
           <feature var='urn:xmpp:mix:core:1'/>
           <feature var='urn:xmpp:mam:2'/>
@@ -27,12 +27,12 @@ defmodule Mixite.Xmpp.DiscoveryController do
     end
   end
 
-  def items(%Conn{to_jid: %Jid{node: channel}} = conn, _query) when channel != "" do
-    if groupchat = Groupchat.get(channel) do
+  def items(%Conn{to_jid: %Jid{node: channel_id}} = conn, _query) when channel_id != "" do
+    if channel = Channel.get(channel_id) do
       items =
-        for node <- groupchat.nodes do
+        for node <- channel.nodes do
           node = "urn:xmpp:mix:nodes:#{node}"
-          "<item jid='#{channel}@#{conn.domain}' node='#{node}'/>"
+          "<item jid='#{channel_id}@#{conn.domain}' node='#{node}'/>"
         end
         |> Enum.join()
 

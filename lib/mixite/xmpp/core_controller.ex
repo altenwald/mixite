@@ -13,7 +13,7 @@ defmodule Mixite.Xmpp.CoreController do
   alias Exampple.Router.Conn
   alias Exampple.Xml.Xmlel
   alias Exampple.Xmpp.Jid
-  alias Mixite.{EventManager, Groupchat}
+  alias Mixite.{Channel, EventManager}
 
   @prefix_ns "urn:xmpp:mix:nodes:"
 
@@ -25,24 +25,25 @@ defmodule Mixite.Xmpp.CoreController do
     send_feature_not_implemented(conn, "iq must have only and at least one child")
   end
 
-  def core(%Conn{to_jid: %Jid{node: channel}} = conn, [query]) do
-    if groupchat = Groupchat.get(channel) do
+  def core(%Conn{to_jid: %Jid{node: channel_id}} = conn, [query]) do
+    if channel = Channel.get(channel_id) do
       case query do
-        %Xmlel{name: "join"} -> join(conn, query, groupchat)
-        %Xmlel{name: "update-subscription"} -> update(conn, query, groupchat)
-        %Xmlel{name: "leave"} -> leave(conn, query, groupchat)
-        %Xmlel{name: "setnick"} -> set_nick(conn, query["nick"], groupchat)
+        %Xmlel{name: "join"} -> join(conn, query, channel)
+        %Xmlel{name: "update-subscription"} -> update(conn, query, channel)
+        %Xmlel{name: "leave"} -> leave(conn, query, channel)
+        %Xmlel{name: "setnick"} -> set_nick(conn, query["nick"], channel)
+        _ -> send_feature_not_implemented(conn, "child unknown: #{to_string(query)}")
       end
     else
       send_not_found(conn)
     end
   end
 
-  defp set_nick(conn, [%Xmlel{children: [nick]}], groupchat) do
+  defp set_nick(conn, [%Xmlel{children: [nick]}], channel) do
     user_jid = to_string(Jid.to_bare(conn.from_jid))
-    if Groupchat.is_participant?(groupchat, user_jid) do
+    if Channel.is_participant?(channel, user_jid) do
       to_jid = to_string(conn.to_jid)
-      if Groupchat.set_nick(groupchat, user_jid, nick) do
+      if Channel.set_nick(channel, user_jid, nick) do
         conn
         |> iq_resp()
         |> send()
@@ -55,13 +56,13 @@ defmodule Mixite.Xmpp.CoreController do
     end
   end
 
-  defp leave(conn, _query, groupchat) do
+  defp leave(conn, _query, channel) do
     user_jid = to_string(Jid.to_bare(conn.from_jid))
-    if Groupchat.is_participant?(groupchat, user_jid) do
+    if Channel.is_participant?(channel, user_jid) do
       to_jid = to_string(conn.to_jid)
-      if Groupchat.leave(groupchat, user_jid) do
-        {{id, _, _}, groupchat} = Groupchat.split(groupchat, user_jid)
-        EventManager.notify({:leave, id, to_jid, user_jid, groupchat})
+      if Channel.leave(channel, user_jid) do
+        {{id, _, _}, channel} = Channel.split(channel, user_jid)
+        EventManager.notify({:leave, id, to_jid, user_jid, channel})
 
         conn
         |> iq_resp()
@@ -75,16 +76,16 @@ defmodule Mixite.Xmpp.CoreController do
     end
   end
 
-  defp update(conn, query, groupchat) do
+  defp update(conn, query, channel) do
     user_jid = to_string(Jid.to_bare(conn.from_jid))
-    if Groupchat.is_participant?(groupchat, user_jid) do
+    if Channel.is_participant?(channel, user_jid) do
       nodes_add =
         for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["subscribe"], do: node
 
       nodes_rem =
         for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["unsubscribe"], do: node
 
-      case Groupchat.update(groupchat, user_jid, nodes_add, nodes_rem) do
+      case Channel.update(channel, user_jid, nodes_add, nodes_rem) do
         {:ok, {add_nodes, rem_nodes}} ->
           from_jid = to_string(Jid.to_bare(conn.from_jid))
           add_nodes = for node <- add_nodes, do: subscribe(node)
@@ -107,7 +108,7 @@ defmodule Mixite.Xmpp.CoreController do
     end
   end
 
-  defp join(conn, query, groupchat) do
+  defp join(conn, query, channel) do
     user_jid = Jid.to_bare(conn.from_jid)
     nick =
       case query["nick"] do
@@ -118,7 +119,7 @@ defmodule Mixite.Xmpp.CoreController do
     nodes_in =
       for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["subscribe"], do: node
 
-    if {id, nodes} = Groupchat.join(groupchat, user_jid, nick, nodes_in) do
+    if {id, nodes} = Channel.join(channel, user_jid, nick, nodes_in) do
       payload =
         %Xmlel{
           name: "join",
@@ -129,7 +130,7 @@ defmodule Mixite.Xmpp.CoreController do
         }
 
       to_jid = to_string(conn.to_jid)
-      EventManager.notify({:join, id, to_jid, user_jid, nick, groupchat})
+      EventManager.notify({:join, id, to_jid, user_jid, nick, channel})
 
       conn
       |> iq_resp([payload])

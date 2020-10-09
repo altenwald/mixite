@@ -13,7 +13,7 @@ defmodule Mixite.Router do
   end
 
   iq "urn:xmpp:mix:core" do
-    set "1", Mixite.Xmpp.CoreController, :join
+    set "1", Mixite.Xmpp.CoreController, :core
   end
 
   fallback Mixite.Xmpp.ErrorController, :error

@@ -1,7 +1,6 @@
 defmodule Mixite.Xmpp.PubsubController do
   use Exampple.Component
 
-  import Exampple.Xml.Xmlel, only: [sigil_x: 2]
   import Mixite.Xmpp.ErrorController, only: [send_not_found: 1]
 
   alias Exampple.Router.Conn

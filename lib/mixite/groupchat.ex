@@ -27,10 +27,21 @@ defmodule Mixite.Groupchat do
   @type participant_id() :: String.t
   @type participant() :: {user_id(), nick(), Jid.t()}
 
-  @type nodes() :: :presence | :participants | :messages | :config
+  @typedoc """
+  The nodes are values which are going to be in use with the full
+  namespace. The possible node values are:
 
-  @callback get(id()) :: Groupchat.t | nil
-  @callback join(id(), user_id(), nick()) :: {participant_id(), [nodes()]}
+  ```
+  "presence" || "participants" || "messages" || "config" || "info"
+  ```
+
+  They are prefixed with: `urn:xmpp:mix:nodes:`.
+  """
+  @type nodes() :: String.t
+
+  @callback get(t()) :: t() | nil
+  @callback join(t(), user_id(), nick(), [nodes()]) :: {participant_id(), [nodes()]}
+  @callback update(t(), user_id(), add :: [nodes()], rem :: [nodes()]) :: boolean()
 
   defstruct [
     id: "",
@@ -43,15 +54,36 @@ defmodule Mixite.Groupchat do
     inserted_at: NaiveDateTime.utc_now()
   ]
 
-  def backend() do
-    Application.get_env(:mixite, :groupchat, Mixite.DummyGroupchat)
+  def valid_nodes() do
+    ~w[
+      config
+      info
+      messages
+      participants
+      presence
+    ]
+  end
+
+  defmacro backend() do
+    backend = Application.get_env(:mixite, :groupchat, Mixite.DummyGroupchat)
+    quote do
+      unquote(backend)
+    end
   end
 
   @spec get(id()) :: Groupchat.t | nil
   def get(id), do: backend().get(id)
 
-  @spec join(id(), user_id(), nick()) :: {participant_id(), [nodes()]}
-  def join(id, user_id, nick) do
-    backend().join(id, user_id, nick)
+  @spec join(t(), user_id(), nick(), [nodes()]) :: {participant_id(), [nodes()]}
+  def join(groupchat, user_id, nick, nodes) do
+    nodes = nodes -- (nodes -- valid_nodes())
+    backend().join(groupchat, user_id, nick, nodes)
+  end
+
+  @spec update(t(), user_id(), add :: [nodes()], rem :: [nodes()]) :: boolean()
+  def update(groupchat, user_id, add_nodes, rem_nodes) do
+    add_nodes = add_nodes -- (add_nodes -- valid_nodes())
+    rem_nodes = rem_nodes -- (rem_nodes -- valid_nodes())
+    backend().update(groupchat, user_id, add_nodes, rem_nodes)
   end
 end

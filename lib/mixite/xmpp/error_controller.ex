@@ -4,25 +4,25 @@ defmodule Mixite.Xmpp.ErrorController do
 
   def send_not_found(conn, lang \\ "en", text \\ "channel not found") do
     conn
-    |> iq_error({"item-not-found", lang, text})
+    |> error({"item-not-found", lang, text})
     |> send()
   end
 
   def send_forbidden(conn, lang \\ "en", text \\ "forbidden access to channel") do
     conn
-    |> iq_error({"forbidden", lang, text})
+    |> error({"forbidden", lang, text})
     |> send()
   end
 
   def send_feature_not_implemented(conn, lang \\ "en", text) do
     conn
-    |> iq_error({"feature-not-implemented", lang, text})
+    |> error({"feature-not-implemented", lang, text})
     |> send()
   end
 
   def send_internal_error(conn, lang \\ "en", text \\ "an internal error happened") do
     conn
-    |> iq_error({"internal-error", lang, text})
+    |> error({"internal-error", lang, text})
     |> send()
   end
 

@@ -16,5 +16,9 @@ defmodule Mixite.Router do
     set "1", Mixite.Xmpp.CoreController, :core
   end
 
+  message do
+    groupchat Mixite.Xmpp.MessageController, :broadcast
+  end
+
   fallback Mixite.Xmpp.ErrorController, :error
 end

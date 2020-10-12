@@ -78,6 +78,11 @@ defmodule Mixite.Channel do
     Enum.any?(participants, fn {_id, _nick, part_jid} -> part_jid == jid end)
   end
 
+  @spec get_participant(t(), user_jid()) :: participant() | nil
+  def get_participant(%Channel{participants: participants}, jid) do
+    Enum.find(participants, fn {_id, _nick, part_jid} -> part_jid == jid end)
+  end
+
   @spec split(t(), user_jid()) :: {participant() | nil, t()}
   def split(%Channel{participants: participants} = channel, jid) do
     filter = fn {_, _, user_jid} -> user_jid == jid end

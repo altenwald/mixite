@@ -29,8 +29,18 @@ defmodule Mixite.Xmpp.MessageController do
             %Xmlel{name: "jid", children: [user_jid]}
           ]
         }
+        payload = query ++ [mix_tag]
+        sid = Channel.store_message(channel, payload)
+        sid_tag = %Xmlel{
+          name: "stanza-id",
+          attrs: %{
+            "xmlns" => "urn:xmpp:sid:0",
+            "id" => sid,
+            "by" => user_jid
+          }
+        }
         from_jid = to_string(Jid.to_bare(conn.to_jid))
-        EventManager.notify({:broadcast, from_jid, channel, query ++ [mix_tag]})
+        EventManager.notify({:broadcast, from_jid, channel, payload ++ [sid_tag]})
       else
         send_forbidden(conn)
       end

@@ -1,6 +1,7 @@
 defmodule Mixite.DummyChannel do
   use Mixite.Channel
 
+  alias Exampple.Xml.Xmlel
   alias Mixite.Channel
 
   @nodes ~w[
@@ -101,5 +102,9 @@ defmodule Mixite.DummyChannel do
 
   def set_nick(%Channel{} = channel, user_jid, _nick) do
     Channel.is_participant?(channel, user_jid)
+  end
+
+  def store_message(%Channel{}, [%Xmlel{} | _]) do
+    "6c015cac-ca8e-44d1-9b6d-b719f76edfaf"
   end
 end

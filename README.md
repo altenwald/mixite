@@ -1,6 +1,6 @@
 # MIXite
 
-MIXite is an generic implementation of [XEP-0369](https://xmpp.org/extensions/xep-0369.html)
+MIXite is an generic implementation of [XEP-0369](https://xmpp.org/extensions/xep-0369.html) which uses also the [XEP-0359](https://xmpp.org/extensions/xep-0359.html) stanza-id implementation and [XEP-0313](https://xmpp.org/extensions/xep-0313.html) for message storing and querying.
 
 ## Installation
 

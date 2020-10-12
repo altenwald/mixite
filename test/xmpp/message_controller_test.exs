@@ -23,13 +23,16 @@ defmodule Mixite.Xmpp.MessageControllerTest do
       stanzas = for to_jid <- to_jids do
         ~x[
           <message from="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
-                  id="uuid"
-                  to="#{ to_jid }">
+                   id="uuid"
+                   to="#{ to_jid }">
             <body>Hello world!</body>
             <mix xmlns="urn:xmpp:mix:core:1">
               <nick>kathleen-booth</nick>
               <jid>2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com</jid>
             </mix>
+            <stanza-id by="2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com"
+                       id="6c015cac-ca8e-44d1-9b6d-b719f76edfaf"
+                       xmlns="urn:xmpp:sid:0"/>
           </message>
         ]
       end

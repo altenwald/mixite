@@ -5,6 +5,7 @@ defmodule Mixite.Channel do
     end
   end
 
+  alias Exampple.Xml.Xmlel
   alias Mixite.Channel
 
   @type mix_node() :: :presence | :participants | :messages | :config
@@ -44,6 +45,7 @@ defmodule Mixite.Channel do
   @callback join(t(), user_jid(), nick(), [nodes()]) :: {participant_id(), [nodes()]}
   @callback update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: boolean()
   @callback leave(t(), user_jid()) :: boolean()
+  @callback store_message(t(), [Xmlel.t()]) :: binary()
 
   defstruct [
     id: "",
@@ -119,5 +121,10 @@ defmodule Mixite.Channel do
   @spec set_nick(t(), user_jid(), nick()) :: boolean()
   def set_nick(channel, user_jid, nick) do
     backend().set_nick(channel, user_jid, nick)
+  end
+
+  @spec store_message(t(), [Xmlel.t()]) :: binary()
+  def store_message(channel, payload) do
+    backend().store_message(channel, payload)
   end
 end

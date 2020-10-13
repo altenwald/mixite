@@ -63,17 +63,17 @@ defmodule Mixite.Xmpp.PubsubController do
   def process_node(%Conn{to_jid: %Jid{node: channel_id}} = conn, "urn:xmpp:mix:nodes:participants") when channel_id != "" do
     if channel = Channel.get(channel_id) do
       items =
-        for {id, nick, jid} <- channel.participants do
+        for participant <- channel.participants do
           %Xmlel{
             name: "item",
-            attrs: %{"id" => id},
+            attrs: %{"id" => participant.id},
             children: [
               %Xmlel{
                 name: "participant",
                 attrs: %{"xmlns" => "urn:xmpp:mix:core:1"},
                 children: [
-                  %Xmlel{name: "nick", children: [nick]},
-                  %Xmlel{name: "jid", children: [jid]}
+                  %Xmlel{name: "nick", children: [participant.nick]},
+                  %Xmlel{name: "jid", children: [participant.jid]}
                 ]
               }
             ]

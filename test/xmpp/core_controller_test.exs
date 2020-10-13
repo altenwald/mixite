@@ -3,6 +3,48 @@ defmodule Mixite.Xmpp.CoreControllerTest do
 
   import Exampple.Xml.Xmlel, only: [sigil_x: 2]
 
+  describe "create" do
+    test "named channel correctly" do
+      component_received ~x[
+        <iq type='set'
+            to='mix.example.com'
+            from='7d4bac95-85b0-426b-9a06-d120be45b723@example.com/hectic'
+            id='90'>
+          <create channel='fa7c9b6a-d5c2-45cb-b807-258116df6548' xmlns='urn:xmpp:mix:core:1'/>
+        </iq>
+      ]
+
+      assert_stanza_receive ~x[
+        <iq type='result'
+            from='mix.example.com'
+            to='7d4bac95-85b0-426b-9a06-d120be45b723@example.com/hectic'
+            id='90'>
+          <create channel='fa7c9b6a-d5c2-45cb-b807-258116df6548' xmlns='urn:xmpp:mix:core:1'/>
+        </iq>
+      ]
+    end
+
+    test "ad-hoc channel correctly" do
+      component_received ~x[
+        <iq type='set'
+            to='mix.example.com'
+            from='7d4bac95-85b0-426b-9a06-d120be45b723@example.com/hectic'
+            id='90'>
+          <create xmlns='urn:xmpp:mix:core:1'/>
+        </iq>
+      ]
+
+      assert_stanza_receive ~x[
+        <iq type='result'
+            from='mix.example.com'
+            to='7d4bac95-85b0-426b-9a06-d120be45b723@example.com/hectic'
+            id='90'>
+          <create channel='uuid' xmlns='urn:xmpp:mix:core:1'/>
+        </iq>
+      ]
+    end
+  end
+
   describe "update-subscription" do
     test "correctly" do
       component_received ~x[

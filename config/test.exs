@@ -1,5 +1,8 @@
 import Config
 
+config :mixite,
+  create_channel: true
+
 config :mixite, Exampple.Component,
   domain: "mixite.example.com",
   host: "localhost",

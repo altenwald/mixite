@@ -14,6 +14,12 @@ defmodule Mixite.Xmpp.ErrorController do
     |> send()
   end
 
+  def send_conflict(conn, lang \\ "en", text \\ "element exists") do
+    conn
+    |> error({"conflict", lang, text})
+    |> send()
+  end
+
   def send_feature_not_implemented(conn, lang \\ "en", text) do
     conn
     |> error({"feature-not-implemented", lang, text})

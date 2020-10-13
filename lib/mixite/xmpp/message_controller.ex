@@ -20,13 +20,13 @@ defmodule Mixite.Xmpp.MessageController do
     if channel = Channel.get(channel_id) do
       user_jid = to_string(Jid.to_bare(conn.from_jid))
       if Channel.is_participant?(channel, user_jid) do
-        {_id, nick, _jid} = Channel.get_participant(channel, user_jid)
+        participant = Channel.get_participant(channel, user_jid)
         mix_tag = %Xmlel{
           name: "mix",
           attrs: %{"xmlns" => "urn:xmpp:mix:core:1"},
           children: [
-            %Xmlel{name: "nick", children: [nick]},
-            %Xmlel{name: "jid", children: [user_jid]}
+            %Xmlel{name: "nick", children: [participant.nick]},
+            %Xmlel{name: "jid", children: [participant.jid]}
           ]
         }
         payload = query ++ [mix_tag]

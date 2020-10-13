@@ -17,10 +17,11 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
         <iq type='result' id='1' to='#{@user}' from='mixite.example.com'>
           <query xmlns='http://jabber.org/protocol/disco#info'>
             <identity category="conference" name="mixite" type="mix"/>
-            <feature var="urn:xmpp:mix:core:1"/>
-            <feature var="http://jabber.org/protocol/pubsub"/>
             <feature var="http://jabber.org/protocol/disco#info"/>
             <feature var="http://jabber.org/protocol/disco#items"/>
+            <feature var="http://jabber.org/protocol/pubsub"/>
+            <feature var="urn:xmpp:mix:core:1"/>
+            <feature var="urn:xmpp:mix:core:1#create-channel"/>
           </query>
         </iq>
       ]

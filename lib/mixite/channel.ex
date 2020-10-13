@@ -2,11 +2,12 @@ defmodule Mixite.Channel do
   defmacro __using__(_opts) do
     quote do
       @behaviour Mixite.Channel
+      alias Mixite.{Channel, Participant}
     end
   end
 
   alias Exampple.Xml.Xmlel
-  alias Mixite.Channel
+  alias Mixite.{Channel, Participant}
 
   @type mix_node() :: :presence | :participants | :messages | :config
 
@@ -16,7 +17,8 @@ defmodule Mixite.Channel do
     description: String.t(),
     nodes: [mix_node()],
     contact: [String.t()],
-    participants: [participant()],
+    owners: [user_jid()],
+    participants: [Participant.t()],
     updated_at: NaiveDateTime.t(),
     inserted_at: NaiveDateTime.t()
   }
@@ -25,9 +27,6 @@ defmodule Mixite.Channel do
   @type user_jid :: String.t()
   @type user_id :: String.t()
   @type nick :: String.t()
-
-  @type participant_id() :: String.t
-  @type participant() :: {user_id(), nick(), user_jid()}
 
   @typedoc """
   The nodes are values which are going to be in use with the full
@@ -39,13 +38,15 @@ defmodule Mixite.Channel do
 
   They are prefixed with: `urn:xmpp:mix:nodes:`.
   """
-  @type nodes() :: String.t
+  @type nodes() :: String.t()
 
   @callback get(t()) :: t() | nil
-  @callback join(t(), user_jid(), nick(), [nodes()]) :: {participant_id(), [nodes()]}
+  @callback join(t(), user_jid(), nick(), [nodes()]) :: {Participant.t(), [nodes()]}
   @callback update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: boolean()
   @callback leave(t(), user_jid()) :: boolean()
+  @callback set_nick(t(), user_jid(), nick()) :: :ok | {:error, Atom.t()}
   @callback store_message(t(), [Xmlel.t()]) :: binary()
+  @callback create(id(), user_jid()) :: t()
 
   defstruct [
     id: "",
@@ -53,6 +54,7 @@ defmodule Mixite.Channel do
     description: "",
     nodes: [:presence, :participants, :messages, :config],
     contact: [],
+    owners: [],
     participants: [],
     updated_at: NaiveDateTime.utc_now(),
     inserted_at: NaiveDateTime.utc_now()
@@ -75,19 +77,33 @@ defmodule Mixite.Channel do
     end
   end
 
+  if Mix.env() == :test do
+    def gen_uuid, do: Application.get_env(:mixite, :uuid_value, "uuid")
+  else
+    def gen_uuid, do: UUID.uuid4()
+  end
+
+  @spec is_participant_or_owner?(t(), user_jid()) :: boolean()
+  def is_participant_or_owner?(channel, jid) do
+    is_participant?(channel, jid) or is_owner?(channel, jid)
+  end
+
+  @spec is_owner?(t(), user_jid()) :: boolean()
+  def is_owner?(%Channel{owners: owners}, jid), do: jid in owners
+
   @spec is_participant?(t(), user_jid()) :: boolean()
   def is_participant?(%Channel{participants: participants}, jid) do
-    Enum.any?(participants, fn {_id, _nick, part_jid} -> part_jid == jid end)
+    Enum.any?(participants, fn %Participant{jid: part_jid} -> part_jid == jid end)
   end
 
-  @spec get_participant(t(), user_jid()) :: participant() | nil
+  @spec get_participant(t(), user_jid()) :: Participant.t() | nil
   def get_participant(%Channel{participants: participants}, jid) do
-    Enum.find(participants, fn {_id, _nick, part_jid} -> part_jid == jid end)
+    Enum.find(participants, fn %Participant{jid: part_jid} -> part_jid == jid end)
   end
 
-  @spec split(t(), user_jid()) :: {participant() | nil, t()}
+  @spec split(t(), user_jid()) :: {Participant.t() | nil, t()}
   def split(%Channel{participants: participants} = channel, jid) do
-    filter = fn {_, _, user_jid} -> user_jid == jid end
+    filter = fn %Participant{jid: user_jid} -> user_jid == jid end
     case Enum.split_with(participants, filter) do
       {[], _participants} ->
         {nil, channel}
@@ -100,7 +116,7 @@ defmodule Mixite.Channel do
   @spec get(id()) :: Channel.t | nil
   def get(id), do: backend().get(id)
 
-  @spec join(t(), user_jid(), nick(), [nodes()]) :: {participant_id(), [nodes()]}
+  @spec join(t(), user_jid(), nick(), [nodes()]) :: {Participant.t(), [nodes()]}
   def join(channel, user_jid, nick, nodes) do
     nodes = nodes -- (nodes -- valid_nodes())
     backend().join(channel, user_jid, nick, nodes)
@@ -118,7 +134,7 @@ defmodule Mixite.Channel do
     backend().leave(channel, user_jid)
   end
 
-  @spec set_nick(t(), user_jid(), nick()) :: boolean()
+  @spec set_nick(t(), user_jid(), nick()) :: :ok | {:error, Atom.t()}
   def set_nick(channel, user_jid, nick) do
     backend().set_nick(channel, user_jid, nick)
   end
@@ -126,5 +142,10 @@ defmodule Mixite.Channel do
   @spec store_message(t(), [Xmlel.t()]) :: binary()
   def store_message(channel, payload) do
     backend().store_message(channel, payload)
+  end
+
+  @spec create(id(), user_jid()) :: t()
+  def create(id, user_jid) do
+    backend().create(id, user_jid)
   end
 end

@@ -6,6 +6,7 @@ defmodule Mixite.Xmpp.CoreController do
   import Mixite.Xmpp.ErrorController, only: [
     send_not_found: 1,
     send_forbidden: 1,
+    send_conflict: 1,
     send_feature_not_implemented: 2,
     send_internal_error: 1
   ]
@@ -15,7 +16,30 @@ defmodule Mixite.Xmpp.CoreController do
   alias Exampple.Xmpp.Jid
   alias Mixite.{Channel, EventManager}
 
+  @xmlns "urn:xmpp:mix:core:1"
   @prefix_ns "urn:xmpp:mix:nodes:"
+
+  if Application.get_env(:mixite, :create_channel, true) do
+    def core(%Conn{to_jid: %Jid{node: ""}} = conn, [%Xmlel{name: "create"} = query]) do
+      user_jid = to_string(Jid.to_bare(conn.from_jid))
+      # if a name is provided (7.3.2) or not (ad-hoc 7.3.3):
+      channel_id = query.attrs["channel"] || Channel.gen_uuid()
+      if channel = Channel.create(channel_id, user_jid) do
+        Logger.info("created channel #{channel.id}")
+        payload =
+          %Xmlel{
+            name: "create",
+            attrs: %{"xmlns" => @xmlns, "channel" => channel.id}
+          }
+
+        conn
+        |> iq_resp([payload])
+        |> send()
+      else
+        send_forbidden(conn)
+      end
+    end
+  end
 
   def core(%Conn{to_jid: %Jid{node: ""}} = conn, _query) do
     send_feature_not_implemented(conn, "namespace #{conn.xmlns} requires a channel")
@@ -42,14 +66,19 @@ defmodule Mixite.Xmpp.CoreController do
   defp set_nick(conn, [%Xmlel{children: [nick]}], channel) do
     user_jid = to_string(Jid.to_bare(conn.from_jid))
     if Channel.is_participant?(channel, user_jid) do
-      to_jid = to_string(conn.to_jid)
-      if Channel.set_nick(channel, user_jid, nick) do
-        conn
-        |> iq_resp()
-        |> send()
-      else
-        Logger.error("user #{user_jid} tried leave #{to_jid} unsuccessfully")
-        send_internal_error(conn)
+      case Channel.set_nick(channel, user_jid, nick) do
+        :ok ->
+          conn
+          |> iq_resp()
+          |> send()
+
+        {:error, :conflict} ->
+          Logger.error("user #{user_jid} cannot change nick to #{nick} because conflict")
+          send_conflict(conn)
+
+        {:error, error} ->
+          Logger.error("user #{user_jid} cannot change nick to #{nick} because #{inspect(error)}")
+          send_internal_error(conn)
       end
     else
       send_forbidden(conn)
@@ -61,8 +90,8 @@ defmodule Mixite.Xmpp.CoreController do
     if Channel.is_participant?(channel, user_jid) do
       to_jid = to_string(conn.to_jid)
       if Channel.leave(channel, user_jid) do
-        {{id, _, _}, channel} = Channel.split(channel, user_jid)
-        EventManager.notify({:leave, id, to_jid, user_jid, channel})
+        {participant, channel} = Channel.split(channel, user_jid)
+        EventManager.notify({:leave, participant.id, to_jid, user_jid, channel})
 
         conn
         |> iq_resp()
@@ -93,7 +122,7 @@ defmodule Mixite.Xmpp.CoreController do
           payload =
             %Xmlel{
               name: "update-subscription",
-              attrs: %{"xmlns" => "urn:xmpp:mix:core:1", "jid" => from_jid},
+              attrs: %{"xmlns" => @xmlns, "jid" => from_jid},
               children: add_nodes ++ rem_nodes
             }
 
@@ -119,18 +148,18 @@ defmodule Mixite.Xmpp.CoreController do
     nodes_in =
       for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["subscribe"], do: node
 
-    if {id, nodes} = Channel.join(channel, user_jid, nick, nodes_in) do
+    if {participant, nodes} = Channel.join(channel, user_jid, nick, nodes_in) do
       payload =
         %Xmlel{
           name: "join",
-          attrs: %{"xmlns" => "urn:xmpp:mix:core:1", "id" => id},
+          attrs: %{"xmlns" => @xmlns, "id" => participant.id},
           children:
             for(node <- nodes, do: subscribe(node)) ++
             [%Xmlel{name: "nick", children: [nick]}]
         }
 
       to_jid = to_string(conn.to_jid)
-      EventManager.notify({:join, id, to_jid, user_jid, nick, channel})
+      EventManager.notify({:join, participant.id, to_jid, user_jid, nick, channel})
 
       conn
       |> iq_resp([payload])

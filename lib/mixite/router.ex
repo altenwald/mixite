@@ -3,6 +3,10 @@ defmodule Mixite.Router do
 
   discovery do
     identity category: "conference", type: "mix", name: "mixite"
+
+    if Application.get_env(:mixite, :create_channel, true) do
+      feature "urn:xmpp:mix:core:1#create-channel"
+    end
   end
 
   iq "http://jabber.org/protocol" do

@@ -4,6 +4,7 @@ defmodule Mixite.Listener.Message do
   alias Exampple.Component
   alias Exampple.Xml.Xmlel
   alias Exampple.Xmpp.Stanza
+  alias Mixite.{Channel, Participant}
 
   @producer Mixite.EventManager
 
@@ -19,9 +20,9 @@ defmodule Mixite.Listener.Message do
   @impl GenStage
   def handle_events([{:broadcast, from_jid, channel, payload}], _from, state) do
     channel.participants
-    |> Enum.each(fn {_id, _nick, jid} ->
+    |> Enum.each(fn %Participant{jid: jid} ->
       payload
-      |> Stanza.message(from_jid, gen_uuid(), jid)
+      |> Stanza.message(from_jid, Channel.gen_uuid(), jid)
       |> Component.send()
     end)
 
@@ -41,9 +42,9 @@ defmodule Mixite.Listener.Message do
       )
 
     channel.participants
-    |> Enum.each(fn {_id, _nick, jid} ->
+    |> Enum.each(fn %Participant{jid: jid} ->
       [payload]
-      |> Stanza.message(from_jid, gen_uuid(), jid)
+      |> Stanza.message(from_jid, Channel.gen_uuid(), jid)
       |> Component.send()
     end)
 
@@ -69,10 +70,10 @@ defmodule Mixite.Listener.Message do
         }
       )
 
-    [{id, nick, user_jid} | channel.participants]
-    |> Enum.each(fn {_id, _nick, jid} ->
+    [%Participant{jid: user_jid} | channel.participants]
+    |> Enum.each(fn %Participant{jid: jid} ->
       [payload]
-      |> Stanza.message(from_jid, gen_uuid(), jid)
+      |> Stanza.message(from_jid, Channel.gen_uuid(), jid)
       |> Component.send()
     end)
 
@@ -91,11 +92,5 @@ defmodule Mixite.Listener.Message do
         }
       ]
     }
-  end
-
-  if Mix.env() == :test do
-    def gen_uuid, do: "uuid"
-  else
-    def gen_uuid, do: UUID.uuid4()
   end
 end

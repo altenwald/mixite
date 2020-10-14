@@ -9,8 +9,8 @@ defmodule Mixite.Xmpp.MessageController do
 
   alias Exampple.Router.Conn
   alias Exampple.Xml.Xmlel
-  alias Exampple.Xmpp.Jid
-  alias Mixite.{Channel, EventManager}
+  alias Exampple.Xmpp.{Jid, Stanza}
+  alias Mixite.{Channel, EventManager, Participant}
 
   def broadcast(%Conn{to_jid: %Jid{node: ""}} = conn, _query) do
     send_feature_not_implemented(conn, "groupchat messages require a channel")
@@ -40,7 +40,16 @@ defmodule Mixite.Xmpp.MessageController do
           }
         }
         from_jid = to_string(Jid.to_bare(conn.to_jid))
-        EventManager.notify({:broadcast, from_jid, channel, payload ++ [sid_tag]})
+        payload = payload ++ [sid_tag]
+        EventManager.notify({:broadcast, from_jid, channel, payload})
+
+        message_id = Channel.gen_uuid()
+        channel.participants
+        |> Enum.each(fn %Participant{jid: jid} ->
+          payload
+          |> Stanza.message(from_jid, message_id, jid)
+          |> send()
+        end)
       else
         send_forbidden(conn)
       end

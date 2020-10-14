@@ -18,14 +18,7 @@ defmodule Mixite.Listener.Message do
   end
 
   @impl GenStage
-  def handle_events([{:broadcast, from_jid, channel, payload}], _from, state) do
-    channel.participants
-    |> Enum.each(fn %Participant{jid: jid} ->
-      payload
-      |> Stanza.message(from_jid, Channel.gen_uuid(), jid)
-      |> Component.send()
-    end)
-
+  def handle_events([{:broadcast, _from_jid, _channel, _payload}], _from, state) do
     {:noreply, [], state}
   end
 

@@ -116,4 +116,8 @@ defmodule Mixite.DummyChannel do
   def create(id, user_jid) do
     %Channel{id: id, owners: [user_jid]}
   end
+
+  def destroy(%Channel{owners: owners}, user_jid) do
+    user_jid in owners
+  end
 end

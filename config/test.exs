@@ -1,7 +1,8 @@
 import Config
 
 config :mixite,
-  create_channel: true
+  create_channel: true,
+  destroy_channel: true
 
 config :mixite, Exampple.Component,
   domain: "mixite.example.com",

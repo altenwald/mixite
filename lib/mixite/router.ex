@@ -24,5 +24,5 @@ defmodule Mixite.Router do
     groupchat Mixite.Xmpp.MessageController, :broadcast
   end
 
-  fallback Mixite.Xmpp.ErrorController, :error
+  fallback Mixite.Xmpp.ErrorController, :handle_error
 end

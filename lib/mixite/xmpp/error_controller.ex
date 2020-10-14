@@ -32,12 +32,12 @@ defmodule Mixite.Xmpp.ErrorController do
     |> send()
   end
 
-  def error(%{type: "result"}, _query), do: :ignore
-  def error(%{type: "error"}, _query), do: :ignore
-  def error(%{stanza_type: "message"}, _query), do: :ignore
-  def error(%{stanza_type: "presence"}, _query), do: :ignore
+  def handle_error(%{type: "result"}, _query), do: :ignore
+  def handle_error(%{type: "error"}, _query), do: :ignore
+  def handle_error(%{stanza_type: "message"}, _query), do: :ignore
+  def handle_error(%{stanza_type: "presence"}, _query), do: :ignore
 
-  def error(conn, _query) do
+  def handle_error(conn, _query) do
     Logger.error("not valid namespace: #{inspect(conn.xmlns)} for #{inspect(conn.stanza_type)}")
     send_feature_not_implemented(conn, "invalid namespace #{conn.xmlns}")
   end

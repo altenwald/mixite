@@ -1,5 +1,5 @@
 %{
-  "exampple": {:git, "https://github.com/altenwald/exampple.git", "02b99c76d614a7b44b11b0844daa26ac01cc585a", [branch: "docs"]},
+  "exampple": {:git, "https://github.com/altenwald/exampple.git", "4ab7c8a97699eaf460b2b5235fc0793f7f852ba8", [branch: "docs"]},
   "gen_stage": {:hex, :gen_stage, "1.0.0", "51c8ae56ff54f9a2a604ca583798c210ad245f415115453b773b621c49776df5", [:mix], [], "hexpm", "1d9fc978db5305ac54e6f5fec7adf80cd893b1000cf78271564c516aa2af7706"},
   "gen_state_machine": {:hex, :gen_state_machine, "2.1.0", "a38b0e53fad812d29ec149f0d354da5d1bc0d7222c3711f3a0bd5aa608b42992", [:mix], [], "hexpm", "ae367038808db25cee2f2c4b8d0531522ea587c4995eb6f96ee73410a60fa06b"},
   "redbug": {:hex, :redbug, "1.2.2", "366d8961770ddc7bb5d209fbadddfa7271005487f938c087a0e385a57abfee33", [:rebar3], [], "hexpm", "b5fe7b94e487be559cb0ec1c0e938c9761205d3e91a96bf263bdf1beaebea729"},

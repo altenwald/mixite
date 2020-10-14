@@ -3,6 +3,28 @@ defmodule Mixite.Xmpp.CoreControllerTest do
 
   import Exampple.Xml.Xmlel, only: [sigil_x: 2]
 
+  describe "destroy channel" do
+    test "correctly" do
+      component_received ~x[
+        <iq type='set'
+            to='mix.example.com'
+            from='4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com/hectic'
+            id='77'>
+          <destroy channel='be89d464-87d1-4351-bdff-a2cdd7bdb975' xmlns='urn:xmpp:mix:core:1'/>
+        </iq>
+      ]
+
+      assert_stanza_receive ~x[
+        <iq type='result'
+            from='mix.example.com'
+            to='4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com/hectic'
+            id='77'>
+          <destroy channel='be89d464-87d1-4351-bdff-a2cdd7bdb975' xmlns='urn:xmpp:mix:core:1'/>
+        </iq>
+      ]
+    end
+  end
+
   describe "create" do
     test "named channel correctly" do
       component_received ~x[
@@ -75,7 +97,7 @@ defmodule Mixite.Xmpp.CoreControllerTest do
     end
   end
 
-  describe "setnick" do
+  describe "set nick" do
     test "correctly" do
       component_received ~x[
         <iq type='set'

@@ -41,6 +41,23 @@ defmodule Mixite.Xmpp.CoreController do
     end
   end
 
+  if Application.get_env(:mixite, :destroy_channel, true) do
+    def core(%Conn{to_jid: %Jid{node: ""}} = conn, [%Xmlel{name: "destroy"} = query]) do
+      user_jid = to_string(Jid.to_bare(conn.from_jid))
+      if channel = Channel.get(query.attrs["channel"]) do
+        if Channel.is_owner?(channel, user_jid) and Channel.destroy(channel, user_jid) do
+          conn
+          |> iq_resp()
+          |> send()
+        else
+          send_forbidden(conn)
+        end
+      else
+        send_not_found(conn)
+      end
+    end
+  end
+
   def core(%Conn{to_jid: %Jid{node: ""}} = conn, _query) do
     send_feature_not_implemented(conn, "namespace #{conn.xmlns} requires a channel")
   end

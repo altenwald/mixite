@@ -47,6 +47,7 @@ defmodule Mixite.Channel do
   @callback set_nick(t(), user_jid(), nick()) :: :ok | {:error, Atom.t()}
   @callback store_message(t(), [Xmlel.t()]) :: binary()
   @callback create(id(), user_jid()) :: t()
+  @callback destroy(t(), user_jid()) :: boolean()
 
   defstruct [
     id: "",
@@ -147,5 +148,10 @@ defmodule Mixite.Channel do
   @spec create(id(), user_jid()) :: t()
   def create(id, user_jid) do
     backend().create(id, user_jid)
+  end
+
+  @spec destroy(t(), user_jid()) :: boolean()
+  def destroy(channel, user_jid) do
+    backend().destroy(channel, user_jid)
   end
 end

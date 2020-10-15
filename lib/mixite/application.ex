@@ -3,7 +3,6 @@ defmodule Mixite.Application do
 
   def start(_type, _args) do
     children = [
-      {Exampple, [otp_app: :mixite]},
       {Mixite.EventManager, []},
       {Mixite.Listener.Message, []}
     ]

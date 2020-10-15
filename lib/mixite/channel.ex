@@ -3,6 +3,46 @@ defmodule Mixite.Channel do
     quote do
       @behaviour Mixite.Channel
       alias Mixite.{Channel, Participant}
+
+      @impl Channel
+      def join(_channel, _jid, _nick, _nodes) do
+        {:error, :not_implemented}
+      end
+
+      @impl Channel
+      def update(_channel, _user_id, _add_nodes, _rem_nodes) do
+        {:error, :not_implemented}
+      end
+
+      @impl Channel
+      def leave(_channel, _user_jid) do
+        {:error, :not_implemented}
+      end
+
+      @impl Channel
+      def set_nick(_channel, _user_jid, _nick) do
+        {:error, :not_implemented}
+      end
+
+      @impl Channel
+      def store_message(_channel, _query) do
+        {:error, :not_implemented}
+      end
+
+      @impl Channel
+      def create(_id, _user_jid) do
+        {:error, :not_implemented}
+      end
+
+      @impl Channel
+      def destroy(_channel, _user_jid) do
+        {:error, :not_implemented}
+      end
+
+      defoverridable [
+        join: 4, update: 4, leave: 2, set_nick: 3,
+        store_message: 2, create: 2, destroy: 2
+      ]
     end
   end
 
@@ -41,13 +81,13 @@ defmodule Mixite.Channel do
   @type nodes() :: String.t()
 
   @callback get(t()) :: t() | nil
-  @callback join(t(), user_jid(), nick(), [nodes()]) :: {Participant.t(), [nodes()]}
-  @callback update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: boolean()
-  @callback leave(t(), user_jid()) :: boolean()
+  @callback join(t(), user_jid(), nick(), [nodes()]) :: {Participant.t(), [nodes()]} | {:error, Atom.t()}
+  @callback update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: boolean() | {:error, :not_implemented}
+  @callback leave(t(), user_jid()) :: boolean() | {:error, :not_implemented}
   @callback set_nick(t(), user_jid(), nick()) :: :ok | {:error, Atom.t()}
-  @callback store_message(t(), [Xmlel.t()]) :: binary()
-  @callback create(id(), user_jid()) :: t()
-  @callback destroy(t(), user_jid()) :: boolean()
+  @callback store_message(t(), Xmlel.t()) :: binary() | {:error, :not_implemented}
+  @callback create(id(), user_jid()) :: t() | {:error, :not_implemented}
+  @callback destroy(t(), user_jid()) :: boolean() | {:error, :not_implemented}
 
   defstruct [
     id: "",
@@ -140,9 +180,9 @@ defmodule Mixite.Channel do
     backend().set_nick(channel, user_jid, nick)
   end
 
-  @spec store_message(t(), [Xmlel.t()]) :: binary()
-  def store_message(channel, payload) do
-    backend().store_message(channel, payload)
+  @spec store_message(t(), Xmlel.t()) :: binary()
+  def store_message(channel, message) do
+    backend().store_message(channel, message)
   end
 
   @spec create(id(), user_jid()) :: t()
@@ -153,5 +193,9 @@ defmodule Mixite.Channel do
   @spec destroy(t(), user_jid()) :: boolean()
   def destroy(channel, user_jid) do
     backend().destroy(channel, user_jid)
+  end
+
+  defimpl String.Chars, for: __MODULE__ do
+    def to_string(%Channel{id: id}), do: "#Channel<id:#{id}>"
   end
 end

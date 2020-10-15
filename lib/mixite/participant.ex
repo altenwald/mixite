@@ -28,4 +28,8 @@ defmodule Mixite.Participant do
       nodes: nodes
     }
   end
+
+  defimpl String.Chars, for: __MODULE__ do
+    def to_string(%Participant{jid: jid}), do: "#Participant<jid:#{jid}>"
+  end
 end

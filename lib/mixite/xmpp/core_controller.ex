@@ -7,7 +7,7 @@ defmodule Mixite.Xmpp.CoreController do
     send_not_found: 1,
     send_forbidden: 1,
     send_conflict: 1,
-    send_feature_not_implemented: 2,
+    send_feature_not_implemented: 3,
     send_internal_error: 1
   ]
 
@@ -59,11 +59,11 @@ defmodule Mixite.Xmpp.CoreController do
   end
 
   def core(%Conn{to_jid: %Jid{node: ""}} = conn, _query) do
-    send_feature_not_implemented(conn, "namespace #{conn.xmlns} requires a channel")
+    send_feature_not_implemented(conn, "en", "namespace #{conn.xmlns} requires a channel")
   end
 
   def core(conn, query) when length(query) != 1 do
-    send_feature_not_implemented(conn, "iq must have only and at least one child")
+    send_feature_not_implemented(conn, "en", "iq must have only and at least one child")
   end
 
   def core(%Conn{to_jid: %Jid{node: channel_id}} = conn, [query]) do
@@ -73,7 +73,7 @@ defmodule Mixite.Xmpp.CoreController do
         %Xmlel{name: "update-subscription"} -> update(conn, query, channel)
         %Xmlel{name: "leave"} -> leave(conn, query, channel)
         %Xmlel{name: "setnick"} -> set_nick(conn, query["nick"], channel)
-        _ -> send_feature_not_implemented(conn, "child unknown: #{to_string(query)}")
+        _ -> send_feature_not_implemented(conn, "en", "child unknown: #{to_string(query)}")
       end
     else
       send_not_found(conn)
@@ -106,16 +106,22 @@ defmodule Mixite.Xmpp.CoreController do
     user_jid = to_string(Jid.to_bare(conn.from_jid))
     if Channel.is_participant?(channel, user_jid) do
       to_jid = to_string(conn.to_jid)
-      if Channel.leave(channel, user_jid) do
-        {participant, channel} = Channel.split(channel, user_jid)
-        EventManager.notify({:leave, participant.id, to_jid, user_jid, channel})
+      case Channel.leave(channel, user_jid) do
+        true ->
+          {participant, channel} = Channel.split(channel, user_jid)
+          EventManager.notify({:leave, participant.id, to_jid, user_jid, channel})
 
-        conn
-        |> iq_resp()
-        |> send()
-      else
-        Logger.error("user #{user_jid} tried leave #{to_jid} unsuccessfully")
-        send_internal_error(conn)
+          conn
+          |> iq_resp()
+          |> send()
+
+        false ->
+          Logger.error("user #{user_jid} tried leave #{to_jid} unsuccessfully")
+          send_internal_error(conn)
+
+        {:error, _} = error ->
+          Logger.error("leave feature not implemented")
+          send_feature_not_implemented(conn, "en", "leave is not supported")
       end
     else
       send_forbidden(conn)
@@ -146,8 +152,14 @@ defmodule Mixite.Xmpp.CoreController do
           conn
           |> iq_resp([payload])
           |> send()
+
+        {:error, :not_implemented} ->
+          Logger.error("update feature not implemented")
+          send_feature_not_implemented(conn, "en", "update is not supported")
+
         {:error, _} = error ->
-          error
+          Logger.error("update failed: #{inspect(error)}")
+          send_internal_error(conn)
       end
     else
       send_forbidden(conn)
@@ -165,24 +177,35 @@ defmodule Mixite.Xmpp.CoreController do
     nodes_in =
       for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["subscribe"], do: node
 
-    if {participant, nodes} = Channel.join(channel, user_jid, nick, nodes_in) do
-      payload =
-        %Xmlel{
-          name: "join",
-          attrs: %{"xmlns" => @xmlns, "id" => participant.id},
-          children:
-            for(node <- nodes, do: subscribe(node)) ++
-            [%Xmlel{name: "nick", children: [nick]}]
-        }
+    case Channel.join(channel, user_jid, nick, nodes_in) do
+      {:error, :not_implemented} ->
+        Logger.error("join feature not implemented")
+        send_feature_not_implemented(conn, "en", "join not implemented")
 
-      to_jid = to_string(conn.to_jid)
-      EventManager.notify({:join, participant.id, to_jid, user_jid, nick, channel})
+      {:error, :forbidden} ->
+        Logger.error("user #{user_jid} was not granted to join #{channel}")
+        send_feature_not_implemented(conn, "en", "join not implemented")
 
-      conn
-      |> iq_resp([payload])
-      |> send()
-    else
-      send_forbidden(conn)
+      {:error, _} = error ->
+        Logger.error("join failed: #{inspect(error)}")
+        send_internal_error(conn)
+
+      {participant, nodes} ->
+        payload =
+          %Xmlel{
+            name: "join",
+            attrs: %{"xmlns" => @xmlns, "id" => participant.id},
+            children:
+              for(node <- nodes, do: subscribe(node)) ++
+              [%Xmlel{name: "nick", children: [nick]}]
+          }
+
+        to_jid = to_string(conn.to_jid)
+        EventManager.notify({:join, participant.id, to_jid, user_jid, nick, channel})
+
+        conn
+        |> iq_resp([payload])
+        |> send()
     end
   end
 

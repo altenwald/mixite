@@ -109,7 +109,7 @@ defmodule Mixite.DummyChannel do
     end
   end
 
-  def store_message(%Channel{}, [%Xmlel{} | _]) do
+  def store_message(%Channel{}, %Xmlel{}) do
     "6c015cac-ca8e-44d1-9b6d-b719f76edfaf"
   end
 

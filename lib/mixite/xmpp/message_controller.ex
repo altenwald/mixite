@@ -6,8 +6,7 @@ defmodule Mixite.Xmpp.MessageController do
   import Mixite.Xmpp.ErrorController, only: [
     send_not_found: 1,
     send_forbidden: 1,
-    send_feature_not_implemented: 3,
-    send_internal_error: 3
+    send_feature_not_implemented: 3
   ]
 
   alias Exampple.Router.Conn
@@ -45,7 +44,7 @@ defmodule Mixite.Xmpp.MessageController do
             Logger.error("store message error: #{inspect(error)}")
             send_feature_not_implemented(conn, "en", "broadcast and store message is not supported")
 
-          sid when is_binary(sid) ->
+          {:ok, sid} when is_binary(sid) ->
             sid_tag = %Xmlel{
               name: "stanza-id",
               attrs: %{

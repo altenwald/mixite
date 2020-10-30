@@ -21,12 +21,14 @@ defmodule Mixite.DummyChannel do
         %Participant{
           id: "ac3c30e4-e1d5-489f-80f4-671735f444ed",
           nick: "john-eckert",
-          jid: "4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com"
+          jid: "4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com",
+          nodes: @nodes
         },
         %Participant{
           id: "2846ff3f-6b90-48e5-9aad-c3782393d8be",
           nick: "john-mauchly",
-          jid: "c3b10914-905d-4920-a5cd-146a0061e478@example.com"
+          jid: "c3b10914-905d-4920-a5cd-146a0061e478@example.com",
+          nodes: @nodes
         }
       ],
       updated_at: ~N[2020-09-23 00:36:20.363444],
@@ -42,17 +44,20 @@ defmodule Mixite.DummyChannel do
         %Participant{
           id: "c4763641-8a00-4e8e-b6de-aaac712481fa",
           nick: "kathleen-booth",
-          jid: "2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com"
+          jid: "2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com",
+          nodes: @nodes
         },
         %Participant{
           id: "b98dd64f-0f2b-4446-8889-3fc7d3f73113",
           nick: "andrew-booth",
-          jid: "f8e744de-3d1b-4528-9cfd-3fa111f7f626@example.com"
+          jid: "f8e744de-3d1b-4528-9cfd-3fa111f7f626@example.com",
+          nodes: @nodes
         },
         %Participant{
           id: "3cb92e3e-798b-49c6-a157-2122356e4cea",
           nick: "alain-turing",
-          jid: "e784345c-4bed-4ce0-9610-e6f57b9ac6f2@example.com"
+          jid: "e784345c-4bed-4ce0-9610-e6f57b9ac6f2@example.com",
+          nodes: @nodes
         }
       ],
       updated_at: ~N[2020-09-23 00:36:20.363444],
@@ -85,39 +90,82 @@ defmodule Mixite.DummyChannel do
     @data[id]
   end
 
+  def join(_channel, "fail@example.com", _nick, _nodes) do
+    {:error, :forbidden}
+  end
+
+  def join(_channel, "missing@example.com", _nick, _nodes) do
+    {:error, :not_implemented}
+  end
+
+  def join(_channel, "unknown@example.com", _nick, _nodes) do
+    {:error, :unknown}
+  end
+
   def join(%Channel{id: "6535bb5c-732f-4a3b-8329-3923aec636a5"}, jid, nick, nodes) do
     intersect_nodes = Enum.sort(nodes -- (nodes -- @nodes))
     participant = Participant.new("92cd9729-7755-4d41-a09b-7105c005aae2", jid, nick, nodes)
-    {participant, intersect_nodes}
+    {:ok, {participant, intersect_nodes}}
+  end
+
+  def update(_channel, "fail@example.com", _add_nodes, _rem_nodes) do
+    {:error, :forbidden}
+  end
+
+  def update(_channel, "missing@example.com", _add_nodes, _rem_nodes) do
+    {:error, :not_implemented}
   end
 
   def update(%Channel{nodes: nodes}, _user_id, add_nodes, rem_nodes) do
-    add_nodes = add_nodes -- nodes
-    rem_nodes = rem_nodes -- (rem_nodes -- nodes)
-    {:ok, {add_nodes, rem_nodes}}
+    nodes = add_nodes ++ nodes -- rem_nodes
+    {:ok, %Channel{nodes: nodes}}
   end
 
   def leave(%Channel{} = channel, user_jid) do
-    Channel.is_participant?(channel, user_jid)
+    if Channel.is_participant?(channel, user_jid) do
+      if channel.name == "error" do
+        {:error, :noimpl}
+      else
+        :ok
+      end
+    else
+      {:error, :notfound}
+    end
   end
 
   def set_nick(%Channel{} = channel, user_jid, _nick) do
     if Channel.is_participant?(channel, user_jid) do
-      :ok
+      if channel.name == "duplicated" do
+        {:error, :conflict}
+      else
+        :ok
+      end
     else
       {:error, :forbidden}
     end
   end
 
+  def store_message(%Channel{}, %Xmlel{attrs: %{"id" => "error"}}) do
+    {:error, :invalid_message}
+  end
+
   def store_message(%Channel{}, %Xmlel{}) do
-    "6c015cac-ca8e-44d1-9b6d-b719f76edfaf"
+    {:ok, "6c015cac-ca8e-44d1-9b6d-b719f76edfaf"}
+  end
+
+  def create(_id, "fail@example.com") do
+    {:error, :invalid}
   end
 
   def create(id, user_jid) do
-    %Channel{id: id, owners: [user_jid]}
+    {:ok, %Channel{id: id, owners: [user_jid]}}
   end
 
   def destroy(%Channel{owners: owners}, user_jid) do
-    user_jid in owners
+    if user_jid in owners do
+      :ok
+    else
+      {:error, :forbidden}
+    end
   end
 end

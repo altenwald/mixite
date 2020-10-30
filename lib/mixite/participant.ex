@@ -6,7 +6,7 @@ defmodule Mixite.Participant do
 
   alias Mixite.{Channel, Participant}
 
-  @type t() :: %{
+  @type t() :: %__MODULE__{
     id: String.t(),
     jid: Channel.user_jid(),
     nick: String.t(),

@@ -24,19 +24,22 @@ defmodule Mixite.Xmpp.CoreController do
       user_jid = to_string(Jid.to_bare(conn.from_jid))
       # if a name is provided (7.3.2) or not (ad-hoc 7.3.3):
       channel_id = query.attrs["channel"] || Channel.gen_uuid()
-      if channel = Channel.create(channel_id, user_jid) do
-        Logger.info("created channel #{channel.id}")
-        payload =
-          %Xmlel{
-            name: "create",
-            attrs: %{"xmlns" => @xmlns, "channel" => channel.id}
-          }
+      case Channel.create(channel_id, user_jid) do
+        {:ok, channel} ->
+          Logger.info("created channel #{channel.id}")
+          payload =
+            %Xmlel{
+              name: "create",
+              attrs: %{"xmlns" => @xmlns, "channel" => channel.id}
+            }
 
-        conn
-        |> iq_resp([payload])
-        |> send()
-      else
-        send_forbidden(conn)
+          conn
+          |> iq_resp([payload])
+          |> send()
+
+        {:error, error} ->
+          Logger.error("creating #{inspect(error)}")
+          send_internal_error(conn)
       end
     end
   end
@@ -107,7 +110,7 @@ defmodule Mixite.Xmpp.CoreController do
     if Channel.is_participant?(channel, user_jid) do
       to_jid = to_string(conn.to_jid)
       case Channel.leave(channel, user_jid) do
-        true ->
+        :ok ->
           {participant, channel} = Channel.split(channel, user_jid)
           EventManager.notify({:leave, participant.id, to_jid, user_jid, channel})
 
@@ -115,12 +118,12 @@ defmodule Mixite.Xmpp.CoreController do
           |> iq_resp()
           |> send()
 
-        false ->
-          Logger.error("user #{user_jid} tried leave #{to_jid} unsuccessfully")
-          send_internal_error(conn)
+        {:error, :notfound} ->
+          Logger.error("user #{user_jid} tried leave #{to_jid} not found")
+          send_not_found(conn)
 
         {:error, _} = error ->
-          Logger.error("leave feature not implemented")
+          Logger.error("leave feature error: #{inspect(error)}")
           send_feature_not_implemented(conn, "en", "leave is not supported")
       end
     else
@@ -138,7 +141,7 @@ defmodule Mixite.Xmpp.CoreController do
         for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["unsubscribe"], do: node
 
       case Channel.update(channel, user_jid, nodes_add, nodes_rem) do
-        {:ok, {add_nodes, rem_nodes}} ->
+        {:ok, {_channel, add_nodes, rem_nodes}} ->
           from_jid = to_string(Jid.to_bare(conn.from_jid))
           add_nodes = for node <- add_nodes, do: subscribe(node)
           rem_nodes = for node <- rem_nodes, do: unsubscribe(node)
@@ -190,7 +193,7 @@ defmodule Mixite.Xmpp.CoreController do
         Logger.error("join failed: #{inspect(error)}")
         send_internal_error(conn)
 
-      {participant, nodes} ->
+      {:ok, {participant, nodes}} ->
         payload =
           %Xmlel{
             name: "join",

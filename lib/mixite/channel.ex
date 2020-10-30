@@ -46,6 +46,8 @@ defmodule Mixite.Channel do
     end
   end
 
+  require Logger
+
   alias Exampple.Xml.Xmlel
   alias Mixite.{Channel, Participant}
 
@@ -81,13 +83,13 @@ defmodule Mixite.Channel do
   @type nodes() :: String.t()
 
   @callback get(t()) :: t() | nil
-  @callback join(t(), user_jid(), nick(), [nodes()]) :: {Participant.t(), [nodes()]} | {:error, Atom.t()}
-  @callback update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: boolean() | {:error, :not_implemented}
-  @callback leave(t(), user_jid()) :: boolean() | {:error, :not_implemented}
+  @callback join(t(), user_jid(), nick(), [nodes()]) :: {:ok, {Participant.t(), [nodes()]}} | {:error, Atom.t()}
+  @callback update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: {:ok, {t(), add :: [nodes()], rem :: [nodes()]}} | {:error, Atom.t()}
+  @callback leave(t(), user_jid()) :: :ok | {:error, Atom.t()}
   @callback set_nick(t(), user_jid(), nick()) :: :ok | {:error, Atom.t()}
-  @callback store_message(t(), Xmlel.t()) :: binary() | {:error, :not_implemented}
-  @callback create(id(), user_jid()) :: t() | {:error, :not_implemented}
-  @callback destroy(t(), user_jid()) :: boolean() | {:error, :not_implemented}
+  @callback store_message(t(), Xmlel.t()) :: {:ok, String.t()} | {:error, Atom.t()}
+  @callback create(id(), user_jid()) :: {:ok, t()} | {:error, Atom.t()}
+  @callback destroy(t(), user_jid()) :: :ok | {:error, Atom.t()}
 
   defstruct [
     id: "",
@@ -154,23 +156,30 @@ defmodule Mixite.Channel do
     end
   end
 
-  @spec get(id()) :: Channel.t | nil
+  @spec get(id()) :: Channel.t() | nil
   def get(id), do: backend().get(id)
 
-  @spec join(t(), user_jid(), nick(), [nodes()]) :: {Participant.t(), [nodes()]}
+  @spec join(t(), user_jid(), nick(), [nodes()]) :: {:ok, {Participant.t(), [nodes()]}} | {:error, Atom.t()}
   def join(channel, user_jid, nick, nodes) do
     nodes = nodes -- (nodes -- valid_nodes())
     backend().join(channel, user_jid, nick, nodes)
   end
 
-  @spec update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: boolean()
+  @spec update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: {:ok, {t(), add :: [nodes()], rem :: [nodes()]}} | {:error, Atom.t()}
   def update(channel, user_jid, add_nodes, rem_nodes) do
-    add_nodes = add_nodes -- (add_nodes -- valid_nodes())
+    add_nodes = (add_nodes -- (add_nodes -- valid_nodes())) -- channel.nodes
     rem_nodes = rem_nodes -- (rem_nodes -- valid_nodes())
-    backend().update(channel, user_jid, add_nodes, rem_nodes)
+    rem_nodes = rem_nodes -- (rem_nodes -- channel.nodes)
+    Logger.debug("channel nodes: #{inspect(channel.nodes)}")
+    Logger.debug("remove nodes: #{inspect(rem_nodes)}")
+    Logger.debug("add nodes: #{inspect(add_nodes)}")
+    case backend().update(channel, user_jid, add_nodes, rem_nodes) do
+      {:error, _} = error -> error
+      {:ok, channel} -> {:ok, {channel, add_nodes, rem_nodes}}
+    end
   end
 
-  @spec leave(t(), user_jid()) :: boolean()
+  @spec leave(t(), user_jid()) :: :ok | {:error, Atom.t()}
   def leave(channel, user_jid) do
     backend().leave(channel, user_jid)
   end
@@ -180,17 +189,17 @@ defmodule Mixite.Channel do
     backend().set_nick(channel, user_jid, nick)
   end
 
-  @spec store_message(t(), Xmlel.t()) :: binary()
+  @spec store_message(t(), Xmlel.t()) :: {:ok, binary()} | {:error, Atom.t()}
   def store_message(channel, message) do
     backend().store_message(channel, message)
   end
 
-  @spec create(id(), user_jid()) :: t()
+  @spec create(id(), user_jid()) :: {:ok, t()} | {:error, Atom.t()}
   def create(id, user_jid) do
     backend().create(id, user_jid)
   end
 
-  @spec destroy(t(), user_jid()) :: boolean()
+  @spec destroy(t(), user_jid()) :: :ok | {:error, Atom.t()}
   def destroy(channel, user_jid) do
     backend().destroy(channel, user_jid)
   end

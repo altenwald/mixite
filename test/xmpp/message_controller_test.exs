@@ -24,7 +24,8 @@ defmodule Mixite.Xmpp.MessageControllerTest do
         ~x[
           <message from="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
                    id="uuid"
-                   to="#{ to_jid }">
+                   to="#{ to_jid }"
+                   type="groupchat">
             <body>Hello world!</body>
             <mix xmlns="urn:xmpp:mix:core:1">
               <nick>kathleen-booth</nick>

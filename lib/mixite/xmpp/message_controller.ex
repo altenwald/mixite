@@ -61,7 +61,7 @@ defmodule Mixite.Xmpp.MessageController do
             channel.participants
             |> Enum.each(fn %Participant{jid: jid} ->
               payload
-              |> Stanza.message(from_jid, message_id, jid)
+              |> Stanza.message(from_jid, message_id, jid, "groupchat")
               |> send()
             end)
         end

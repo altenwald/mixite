@@ -120,11 +120,7 @@ defmodule Mixite.Channel do
     end
   end
 
-  if Mix.env() == :test do
-    def gen_uuid, do: Application.get_env(:mixite, :uuid_value, "uuid")
-  else
-    def gen_uuid, do: UUID.uuid4()
-  end
+  def gen_uuid, do: Application.get_env(:mixite, :uuid_value, UUID.uuid4())
 
   @spec is_participant_or_owner?(t(), user_jid()) :: boolean()
   def is_participant_or_owner?(channel, jid) do

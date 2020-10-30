@@ -2,7 +2,8 @@ import Config
 
 config :mixite,
   create_channel: true,
-  destroy_channel: true
+  destroy_channel: true,
+  uuid_value: "uuid"
 
 config :mixite, Exampple.Component,
   domain: "mixite.example.com",

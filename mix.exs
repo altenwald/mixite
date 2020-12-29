@@ -26,7 +26,7 @@ defmodule Mixite.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:exampple, "~> 0.5"},
+      {:exampple, "~> 0.7"},
       {:gen_stage, "~> 1.0"},
       {:uuid, "~> 1.1"},
       {:rexbug, ">= 0.0.0", optional: true}

@@ -149,6 +149,10 @@ defmodule Mixite.DummyChannel do
     {:error, :invalid_message}
   end
 
+  def store_message(%Channel{}, %Xmlel{attrs: %{"id" => "disable-store"}}) do
+    {:ok, nil}
+  end
+
   def store_message(%Channel{}, %Xmlel{}) do
     {:ok, "6c015cac-ca8e-44d1-9b6d-b719f76edfaf"}
   end

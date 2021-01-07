@@ -14,6 +14,19 @@ defmodule Mixite.Xmpp.MessageController do
   alias Exampple.Xmpp.{Jid, Stanza}
   alias Mixite.{Channel, EventManager, Participant}
 
+  defp send_broadcast(conn, channel, payload) do
+    from_jid = to_string(Jid.to_bare(conn.to_jid))
+    EventManager.notify({:broadcast, from_jid, channel, payload})
+
+    message_id = Channel.gen_uuid()
+    channel.participants
+    |> Enum.each(fn %Participant{jid: jid} ->
+      payload
+      |> Stanza.message(from_jid, message_id, jid, "groupchat")
+      |> send()
+    end)
+  end
+
   def broadcast(%Conn{to_jid: %Jid{node: ""}} = conn, _query) do
     send_feature_not_implemented(conn, "en", "groupchat messages require a channel")
   end
@@ -44,6 +57,9 @@ defmodule Mixite.Xmpp.MessageController do
             Logger.error("store message error: #{inspect(error)}")
             send_feature_not_implemented(conn, "en", "broadcast and store message is not supported")
 
+          {:ok, nil} ->
+            send_broadcast(conn, channel, payload)
+
           {:ok, sid} when is_binary(sid) ->
             sid_tag = %Xmlel{
               name: "stanza-id",
@@ -53,17 +69,8 @@ defmodule Mixite.Xmpp.MessageController do
                 "by" => user_jid
               }
             }
-            from_jid = to_string(Jid.to_bare(conn.to_jid))
             payload = payload ++ [sid_tag]
-            EventManager.notify({:broadcast, from_jid, channel, payload})
-
-            message_id = Channel.gen_uuid()
-            channel.participants
-            |> Enum.each(fn %Participant{jid: jid} ->
-              payload
-              |> Stanza.message(from_jid, message_id, jid, "groupchat")
-              |> send()
-            end)
+            send_broadcast(conn, channel, payload)
         end
       else
         send_forbidden(conn)

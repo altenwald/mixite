@@ -66,6 +66,7 @@ defmodule Mixite.Channel do
     nodes: [mix_node()],
     contact: [String.t()],
     owners: [user_jid()],
+    administrators: [user_jid()],
     participants: [Participant.t()],
     updated_at: NaiveDateTime.t(),
     inserted_at: NaiveDateTime.t()
@@ -105,6 +106,7 @@ defmodule Mixite.Channel do
     nodes: ~w[ presence participants messages config ]a,
     contact: [],
     owners: [],
+    administrators: [],
     participants: [],
     updated_at: NaiveDateTime.utc_now(),
     inserted_at: NaiveDateTime.utc_now()
@@ -134,8 +136,18 @@ defmodule Mixite.Channel do
     is_participant?(channel, jid) or is_owner?(channel, jid)
   end
 
+  @spec is_administrator_or_owner?(t(), user_jid()) :: boolean()
+  def is_administrator_or_owner?(channel, jid) do
+    is_administrator?(channel, jid) or is_owner?(channel, jid)
+  end
+
   @spec is_owner?(t(), user_jid()) :: boolean()
   def is_owner?(%Channel{owners: owners}, jid), do: jid in owners
+
+  @spec is_administrator?(t(), user_jid()) :: boolean()
+  def is_administrator?(%Channel{administrators: administrators}, jid) do
+    jid in administrators
+  end
 
   @spec is_participant?(t(), user_jid()) :: boolean()
   def is_participant?(%Channel{participants: participants}, jid) do

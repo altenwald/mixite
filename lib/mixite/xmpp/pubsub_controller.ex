@@ -46,6 +46,7 @@ defmodule Mixite.Xmpp.PubsubController do
               children:
                 field("FORM_TYPE", "hidden", "urn:xmpp:mix:core:1") ++
                 field("Owner", channel.owners) ++
+                field("Administrator", channel.administrators) ++
                 Enum.map(Channel.config_params(channel), fn
                   {{key, type}, value} -> hd(field(key, type, value))
                   {key, value} -> hd(field(key, value))

@@ -83,6 +83,50 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
       ]
     end
 
+    test "nodes:config from a channel with administrators" do
+      component_received ~x[
+        <iq from='user-id@example.com/UUID-c8y/1573'
+            id='kl2fax27'
+            to='3cfd82c0-8453-4198-a706-dbec5692dc43@mixite.example.com'
+            type='get'>
+          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+            <items node='urn:xmpp:mix:nodes:config'/>
+          </pubsub>
+        </iq>
+      ]
+
+      assert_stanza_receive ~x[
+        <iq from='3cfd82c0-8453-4198-a706-dbec5692dc43@mixite.example.com'
+            id='kl2fax27'
+            to='user-id@example.com/UUID-c8y/1573'
+            type='result'>
+          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+            <items node='urn:xmpp:mix:nodes:config'>
+              <item id='2020-10-09 00:45:55.363444'>
+                <x xmlns='jabber:x:data' type='result'>
+                  <field var='FORM_TYPE' type='hidden'>
+                    <value>urn:xmpp:mix:core:1</value>
+                  </field>
+                  <field var='Owner'>
+                    <value>8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com</value>
+                  </field>
+                  <field var='Administrator'>
+                    <value>c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com</value>
+                  </field>
+                  <field var='Messages Node Subscription'>
+                    <value>allowed</value>
+                  </field>
+                  <field var='No Private Messages'>
+                    <value>true</value>
+                  </field>
+                </x>
+              </item>
+            </items>
+          </pubsub>
+        </iq>
+      ]
+    end
+
     test "nodes:participants from a channel" do
       component_received ~x[
         <iq from='user-id@example.com/UUID-c8y/1573'

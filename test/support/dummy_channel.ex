@@ -83,6 +83,29 @@ defmodule Mixite.DummyChannel do
       ],
       updated_at: ~N[2020-10-09 00:45:55.363444],
       inserted_at: ~N[2020-10-09 00:45:55.363444]
+    },
+    "3cfd82c0-8453-4198-a706-dbec5692dc43" => %Channel{
+      id: "3cfd82c0-8453-4198-a706-dbec5692dc43",
+      name: "Iceland Friends",
+      description: "Friends from Iceland last trip (2021)",
+      nodes: @nodes,
+      contact: nil,
+      owners: ["8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com"],
+      administrators: ["c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com"],
+      participants: [
+        %Participant{
+          id: "07f3022d-cb01-4bd8-8333-0a398be4ee8f",
+          nick: "grace-hopper",
+          jid: "8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com"
+        },
+        %Participant{
+          id: "0d26525e-f3cc-462c-94d1-61a5beafb033",
+          nick: "john-von-neumann",
+          jid: "c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com"
+        }
+      ],
+      updated_at: ~N[2020-10-09 00:45:55.363444],
+      inserted_at: ~N[2020-10-09 00:45:55.363444]
     }
   }
 

@@ -89,7 +89,7 @@ defmodule Mixite.Channel do
   @type nodes() :: String.t()
 
   @callback get(id()) :: t() | nil
-  @callback config_params(t()) :: %{String.t() => String.t() | [String.t()]}
+  @callback config_params(t()) :: %{(String.t() | {String.t(), String.t()}) => String.t() | [String.t()]}
   @callback join(t(), user_jid(), nick(), [nodes()]) :: {:ok, {Participant.t(), [nodes()]}} | {:error, Atom.t()}
   @callback update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: {:ok, {t(), add :: [nodes()], rem :: [nodes()]}} | {:error, Atom.t()}
   @callback leave(t(), user_jid()) :: :ok | {:error, Atom.t()}

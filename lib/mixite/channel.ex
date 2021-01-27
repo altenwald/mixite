@@ -39,9 +39,15 @@ defmodule Mixite.Channel do
         {:error, :not_implemented}
       end
 
+      @impl Channel
+      def config_params(_channel) do
+        %{}
+      end
+
       defoverridable [
         join: 4, update: 4, leave: 2, set_nick: 3,
-        store_message: 2, create: 2, destroy: 2
+        store_message: 2, create: 2, destroy: 2,
+        config_params: 1
       ]
     end
   end
@@ -51,7 +57,7 @@ defmodule Mixite.Channel do
   alias Exampple.Xml.Xmlel
   alias Mixite.{Channel, Participant}
 
-  @type mix_node() :: :presence | :participants | :messages | :config
+  @type mix_node() :: :presence | :participants | :messages | :config | :info
 
   @type t() :: %__MODULE__{
     id: String.t(),
@@ -82,12 +88,13 @@ defmodule Mixite.Channel do
   """
   @type nodes() :: String.t()
 
-  @callback get(t()) :: t() | nil
+  @callback get(id()) :: t() | nil
+  @callback config_params(t()) :: %{String.t() => String.t() | [String.t()]}
   @callback join(t(), user_jid(), nick(), [nodes()]) :: {:ok, {Participant.t(), [nodes()]}} | {:error, Atom.t()}
   @callback update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: {:ok, {t(), add :: [nodes()], rem :: [nodes()]}} | {:error, Atom.t()}
   @callback leave(t(), user_jid()) :: :ok | {:error, Atom.t()}
   @callback set_nick(t(), user_jid(), nick()) :: :ok | {:error, Atom.t()}
-  @callback store_message(t(), Xmlel.t()) :: {:ok, String.t()} | {:error, Atom.t()}
+  @callback store_message(t(), Xmlel.t()) :: {:ok, String.t() | nil} | {:error, Atom.t()}
   @callback create(id(), user_jid()) :: {:ok, t()} | {:error, Atom.t()}
   @callback destroy(t(), user_jid()) :: :ok | {:error, Atom.t()}
 
@@ -95,7 +102,7 @@ defmodule Mixite.Channel do
     id: "",
     name: "",
     description: "",
-    nodes: [:presence, :participants, :messages, :config],
+    nodes: ~w[ presence participants messages config ]a,
     contact: [],
     owners: [],
     participants: [],
@@ -155,6 +162,11 @@ defmodule Mixite.Channel do
   @spec get(id()) :: Channel.t() | nil
   def get(id), do: backend().get(id)
 
+  @spec config_params(t()) :: %{ String.t() => String.t() | [String.t()] }
+  def config_params(channel) do
+    backend().config_params(channel)
+  end
+
   @spec join(t(), user_jid(), nick(), [nodes()]) :: {:ok, {Participant.t(), [nodes()]}} | {:error, Atom.t()}
   def join(channel, user_jid, nick, nodes) do
     nodes = nodes -- (nodes -- valid_nodes())
@@ -185,7 +197,7 @@ defmodule Mixite.Channel do
     backend().set_nick(channel, user_jid, nick)
   end
 
-  @spec store_message(t(), Xmlel.t()) :: {:ok, binary()} | {:error, Atom.t()}
+  @spec store_message(t(), Xmlel.t()) :: {:ok, String.t() | nil} | {:error, Atom.t()}
   def store_message(channel, message) do
     backend().store_message(channel, message)
   end

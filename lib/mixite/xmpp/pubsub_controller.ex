@@ -33,6 +33,35 @@ defmodule Mixite.Xmpp.PubsubController do
     [%Xmlel{name: "field", attrs: attrs, children: children}]
   end
 
+  def process_node(%Conn{to_jid: %Jid{node: channel_id}} = conn, "urn:xmpp:mix:nodes:config") when channel_id != "" do
+    if channel = Channel.get(channel_id) do
+      item =
+        %Xmlel{
+          name: "item",
+          attrs: %{"id" => to_string(channel.updated_at)},
+          children: [
+            %Xmlel{
+              name: "x",
+              attrs: %{"xmlns" => "jabber:x:data", "type" => "result"},
+              children:
+                field("FORM_TYPE", "hidden", "urn:xmpp:mix:core:1") ++
+                field("Owner", channel.owners) ++
+                Enum.map(Channel.config_params(channel), fn
+                  {{key, type}, value} -> hd(field(key, type, value))
+                  {key, value} -> hd(field(key, value))
+                end)
+            }
+          ]
+        }
+
+      conn
+      |> iq_resp([pubsub("urn:xmpp:mix:nodes:config", [item])])
+      |> send()
+    else
+      send_not_found(conn)
+    end
+  end
+
   def process_node(%Conn{to_jid: %Jid{node: channel_id}} = conn, "urn:xmpp:mix:nodes:info") when channel_id != "" do
     if channel = Channel.get(channel_id) do
       item =

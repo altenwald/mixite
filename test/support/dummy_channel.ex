@@ -90,6 +90,13 @@ defmodule Mixite.DummyChannel do
     @data[id]
   end
 
+  def config_params(_channel) do
+    %{
+      "Messages Node Subscription" => "allowed",
+      "No Private Messages" => "true"
+    }
+  end
+
   def join(_channel, "fail@example.com", _nick, _nodes) do
     {:error, :forbidden}
   end

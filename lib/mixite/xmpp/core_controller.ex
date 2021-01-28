@@ -3,13 +3,14 @@ defmodule Mixite.Xmpp.CoreController do
 
   require Logger
 
-  import Mixite.Xmpp.ErrorController, only: [
-    send_not_found: 1,
-    send_forbidden: 1,
-    send_conflict: 1,
-    send_feature_not_implemented: 3,
-    send_internal_error: 1
-  ]
+  import Mixite.Xmpp.ErrorController,
+    only: [
+      send_not_found: 1,
+      send_forbidden: 1,
+      send_conflict: 1,
+      send_feature_not_implemented: 3,
+      send_internal_error: 1
+    ]
 
   alias Exampple.Router.Conn
   alias Exampple.Xml.Xmlel
@@ -21,17 +22,18 @@ defmodule Mixite.Xmpp.CoreController do
 
   if Application.get_env(:mixite, :create_channel, true) do
     def core(%Conn{to_jid: %Jid{node: ""}} = conn, [%Xmlel{name: "create"} = query]) do
-      user_jid = to_string(Jid.to_bare(conn.from_jid))
+      user_jid = Jid.to_bare(conn.from_jid)
       # if a name is provided (7.3.2) or not (ad-hoc 7.3.3):
       channel_id = query.attrs["channel"] || Channel.gen_uuid()
+
       case Channel.create(channel_id, user_jid) do
         {:ok, channel} ->
           Logger.info("created channel #{channel.id}")
-          payload =
-            %Xmlel{
-              name: "create",
-              attrs: %{"xmlns" => @xmlns, "channel" => channel.id}
-            }
+
+          payload = %Xmlel{
+            name: "create",
+            attrs: %{"xmlns" => @xmlns, "channel" => channel.id}
+          }
 
           conn
           |> iq_resp([payload])
@@ -46,7 +48,8 @@ defmodule Mixite.Xmpp.CoreController do
 
   if Application.get_env(:mixite, :destroy_channel, true) do
     def core(%Conn{to_jid: %Jid{node: ""}} = conn, [%Xmlel{name: "destroy"} = query]) do
-      user_jid = to_string(Jid.to_bare(conn.from_jid))
+      user_jid = Jid.to_bare(conn.from_jid)
+
       if channel = Channel.get(query.attrs["channel"]) do
         if Channel.is_owner?(channel, user_jid) and Channel.destroy(channel, user_jid) do
           conn
@@ -84,7 +87,8 @@ defmodule Mixite.Xmpp.CoreController do
   end
 
   defp set_nick(conn, [%Xmlel{children: [nick]}], channel) do
-    user_jid = to_string(Jid.to_bare(conn.from_jid))
+    user_jid = Jid.to_bare(conn.from_jid)
+
     if Channel.is_participant?(channel, user_jid) do
       case Channel.set_nick(channel, user_jid, nick) do
         :ok ->
@@ -106,9 +110,11 @@ defmodule Mixite.Xmpp.CoreController do
   end
 
   defp leave(conn, _query, channel) do
-    user_jid = to_string(Jid.to_bare(conn.from_jid))
+    user_jid = Jid.to_bare(conn.from_jid)
+
     if Channel.is_participant?(channel, user_jid) do
       to_jid = to_string(conn.to_jid)
+
       case Channel.leave(channel, user_jid) do
         :ok ->
           {participant, channel} = Channel.split(channel, user_jid)
@@ -132,7 +138,8 @@ defmodule Mixite.Xmpp.CoreController do
   end
 
   defp update(conn, query, channel) do
-    user_jid = to_string(Jid.to_bare(conn.from_jid))
+    user_jid = Jid.to_bare(conn.from_jid)
+
     if Channel.is_participant?(channel, user_jid) do
       nodes_add =
         for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["subscribe"], do: node
@@ -142,15 +149,15 @@ defmodule Mixite.Xmpp.CoreController do
 
       case Channel.update(channel, user_jid, nodes_add, nodes_rem) do
         {:ok, {_channel, add_nodes, rem_nodes}} ->
-          from_jid = to_string(Jid.to_bare(conn.from_jid))
+          from_jid = Jid.to_bare(conn.from_jid)
           add_nodes = for node <- add_nodes, do: subscribe(node)
           rem_nodes = for node <- rem_nodes, do: unsubscribe(node)
-          payload =
-            %Xmlel{
-              name: "update-subscription",
-              attrs: %{"xmlns" => @xmlns, "jid" => from_jid},
-              children: add_nodes ++ rem_nodes
-            }
+
+          payload = %Xmlel{
+            name: "update-subscription",
+            attrs: %{"xmlns" => @xmlns, "jid" => from_jid},
+            children: add_nodes ++ rem_nodes
+          }
 
           conn
           |> iq_resp([payload])
@@ -171,14 +178,14 @@ defmodule Mixite.Xmpp.CoreController do
 
   defp join(conn, query, channel) do
     user_jid = Jid.to_bare(conn.from_jid)
+
     nick =
       case query["nick"] do
         [%Xmlel{children: [nick]}] -> nick
         _ -> nil
       end
 
-    nodes_in =
-      for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["subscribe"], do: node
+    nodes_in = for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["subscribe"], do: node
 
     case Channel.join(channel, user_jid, nick, nodes_in) do
       {:error, :not_implemented} ->
@@ -194,14 +201,13 @@ defmodule Mixite.Xmpp.CoreController do
         send_internal_error(conn)
 
       {:ok, {participant, nodes}} ->
-        payload =
-          %Xmlel{
-            name: "join",
-            attrs: %{"xmlns" => @xmlns, "id" => participant.id},
-            children:
-              for(node <- nodes, do: subscribe(node)) ++
+        payload = %Xmlel{
+          name: "join",
+          attrs: %{"xmlns" => @xmlns, "id" => participant.id},
+          children:
+            for(node <- nodes, do: subscribe(node)) ++
               [%Xmlel{name: "nick", children: [nick]}]
-          }
+        }
 
         to_jid = to_string(conn.to_jid)
         EventManager.notify({:join, participant.id, to_jid, user_jid, nick, channel})

@@ -106,11 +106,42 @@ defmodule Mixite.DummyChannel do
       ],
       updated_at: ~N[2020-10-09 00:45:55.363444],
       inserted_at: ~N[2020-10-09 00:45:55.363444]
+    },
+    "28be3cc7-d605-40dd-8b5a-012b59e90c26" => %Channel{
+      id: "28be3cc7-d605-40dd-8b5a-012b59e90c26",
+      name: "Sweden Friends",
+      description: "Friends from Sweden last trip (2020)",
+      nodes: @nodes,
+      contact: nil,
+      owners: ["8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com"],
+      participants: [
+        %Participant{
+          id: "07f3022d-cb01-4bd8-8333-0a398be4ee8f",
+          nick: "grace-hopper",
+          jid: "91d30b13-9905-49a5-8da3-5694b16cff19@example.com"
+        },
+        %Participant{
+          id: "0d26525e-f3cc-462c-94d1-61a5beafb033",
+          nick: "john-von-neumann",
+          jid: "85c3a29b-7aa8-488f-96a2-41440505f999@example.com"
+        }
+      ],
+      updated_at: ~N[2020-10-09 00:45:55.363444],
+      inserted_at: ~N[2020-10-09 00:45:55.363444]
     }
   }
 
   def get(id) do
     @data[id]
+  end
+
+  def list_by_jid(jid) do
+    Enum.filter(@data, fn {_, channel} ->
+      jid in channel.owners or
+        jid in channel.administrators or
+        Enum.any?(channel.participants, &(&1.jid == jid))
+    end)
+    |> Enum.map(fn {_, channel} -> channel end)
   end
 
   def config_params(_channel) do
@@ -133,7 +164,7 @@ defmodule Mixite.DummyChannel do
   end
 
   def join(%Channel{id: "6535bb5c-732f-4a3b-8329-3923aec636a5"}, jid, nick, nodes) do
-    intersect_nodes = Enum.sort(nodes -- (nodes -- @nodes))
+    intersect_nodes = Enum.sort(nodes -- nodes -- @nodes)
     participant = Participant.new("92cd9729-7755-4d41-a09b-7105c005aae2", jid, nick, nodes)
     {:ok, {participant, intersect_nodes}}
   end
@@ -147,7 +178,7 @@ defmodule Mixite.DummyChannel do
   end
 
   def update(%Channel{nodes: nodes}, _user_id, add_nodes, rem_nodes) do
-    nodes = add_nodes ++ nodes -- rem_nodes
+    nodes = add_nodes ++ (nodes -- rem_nodes)
     {:ok, %Channel{nodes: nodes}}
   end
 

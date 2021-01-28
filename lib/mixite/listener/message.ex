@@ -24,15 +24,13 @@ defmodule Mixite.Listener.Message do
 
   def handle_events([{:leave, id, from_jid, user_jid, channel}], _from, state) do
     payload =
-      build_node(
-        %Xmlel{
-          name: "retract",
-          attrs: %{"id" => id},
-          children: [
-            %Xmlel{name: "jid", children: [user_jid]}
-          ]
-        }
-      )
+      build_node(%Xmlel{
+        name: "retract",
+        attrs: %{"id" => id},
+        children: [
+          %Xmlel{name: "jid", children: [user_jid]}
+        ]
+      })
 
     channel.participants
     |> Enum.each(fn %Participant{jid: jid} ->
@@ -46,22 +44,20 @@ defmodule Mixite.Listener.Message do
 
   def handle_events([{:join, id, from_jid, user_jid, nick, channel}], _from, state) do
     payload =
-      build_node(
-        %Xmlel{
-          name: "item",
-          attrs: %{"id" => id},
-          children: [
-            %Xmlel{
-              name: "participant",
-              attrs: %{"xmlns" => "urn:xmpp:mix:core:1"},
-              children: [
-                %Xmlel{name: "jid", children: [user_jid]},
-                %Xmlel{name: "nick", children: [nick]}
-              ]
-            }
-          ]
-        }
-      )
+      build_node(%Xmlel{
+        name: "item",
+        attrs: %{"id" => id},
+        children: [
+          %Xmlel{
+            name: "participant",
+            attrs: %{"xmlns" => "urn:xmpp:mix:core:1"},
+            children: [
+              %Xmlel{name: "jid", children: [user_jid]},
+              %Xmlel{name: "nick", children: [nick]}
+            ]
+          }
+        ]
+      })
 
     [%Participant{jid: user_jid} | channel.participants]
     |> Enum.each(fn %Participant{jid: jid} ->

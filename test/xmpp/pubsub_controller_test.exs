@@ -5,7 +5,7 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
 
   describe "pubsub: " do
     test "nodes:info from a channel" do
-      component_received ~x[
+      component_received(~x[
         <iq from='user-id@example.com/UUID-c8y/1573'
             id='kl2fax27'
             to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
@@ -14,9 +14,9 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             <items node='urn:xmpp:mix:nodes:info'/>
           </pubsub>
         </iq>
-      ]
+      ])
 
-      assert_stanza_receive ~x[
+      assert_stanza_receive(~x[
         <iq from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
             id='kl2fax27'
             to='user-id@example.com/UUID-c8y/1573'
@@ -39,11 +39,11 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             </items>
           </pubsub>
         </iq>
-      ]
+      ])
     end
 
     test "nodes:config from a channel" do
-      component_received ~x[
+      component_received(~x[
         <iq from='user-id@example.com/UUID-c8y/1573'
             id='kl2fax27'
             to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
@@ -52,9 +52,9 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             <items node='urn:xmpp:mix:nodes:config'/>
           </pubsub>
         </iq>
-      ]
+      ])
 
-      assert_stanza_receive ~x[
+      assert_stanza_receive(~x[
         <iq from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
             id='kl2fax27'
             to='user-id@example.com/UUID-c8y/1573'
@@ -80,11 +80,11 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             </items>
           </pubsub>
         </iq>
-      ]
+      ])
     end
 
     test "nodes:config from a channel with administrators" do
-      component_received ~x[
+      component_received(~x[
         <iq from='user-id@example.com/UUID-c8y/1573'
             id='kl2fax27'
             to='3cfd82c0-8453-4198-a706-dbec5692dc43@mixite.example.com'
@@ -93,9 +93,9 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             <items node='urn:xmpp:mix:nodes:config'/>
           </pubsub>
         </iq>
-      ]
+      ])
 
-      assert_stanza_receive ~x[
+      assert_stanza_receive(~x[
         <iq from='3cfd82c0-8453-4198-a706-dbec5692dc43@mixite.example.com'
             id='kl2fax27'
             to='user-id@example.com/UUID-c8y/1573'
@@ -124,11 +124,11 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             </items>
           </pubsub>
         </iq>
-      ]
+      ])
     end
 
     test "nodes:participants from a channel" do
-      component_received ~x[
+      component_received(~x[
         <iq from='user-id@example.com/UUID-c8y/1573'
             id='kl2fax27'
             to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
@@ -137,9 +137,9 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             <items node='urn:xmpp:mix:nodes:participants'/>
           </pubsub>
         </iq>
-      ]
+      ])
 
-      assert_stanza_receive ~x[
+      assert_stanza_receive(~x[
         <iq from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
             id='kl2fax27'
             to='user-id@example.com/UUID-c8y/1573'
@@ -161,7 +161,7 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             </items>
           </pubsub>
         </iq>
-      ]
+      ])
     end
   end
 end

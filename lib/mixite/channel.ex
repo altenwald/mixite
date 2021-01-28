@@ -44,11 +44,14 @@ defmodule Mixite.Channel do
         %{}
       end
 
-      defoverridable [
-        join: 4, update: 4, leave: 2, set_nick: 3,
-        store_message: 2, create: 2, destroy: 2,
-        config_params: 1
-      ]
+      defoverridable join: 4,
+                     update: 4,
+                     leave: 2,
+                     set_nick: 3,
+                     store_message: 2,
+                     create: 2,
+                     destroy: 2,
+                     config_params: 1
     end
   end
 
@@ -60,17 +63,17 @@ defmodule Mixite.Channel do
   @type mix_node() :: :presence | :participants | :messages | :config | :info
 
   @type t() :: %__MODULE__{
-    id: String.t(),
-    name: String.t(),
-    description: String.t(),
-    nodes: [mix_node()],
-    contact: [String.t()],
-    owners: [user_jid()],
-    administrators: [user_jid()],
-    participants: [Participant.t()],
-    updated_at: NaiveDateTime.t(),
-    inserted_at: NaiveDateTime.t()
-  }
+          id: String.t(),
+          name: String.t(),
+          description: String.t(),
+          nodes: [mix_node()],
+          contact: [String.t()],
+          owners: [user_jid()],
+          administrators: [user_jid()],
+          participants: [Participant.t()],
+          updated_at: NaiveDateTime.t(),
+          inserted_at: NaiveDateTime.t()
+        }
 
   @type id :: String.t()
   @type user_jid :: String.t()
@@ -90,27 +93,30 @@ defmodule Mixite.Channel do
   @type nodes() :: String.t()
 
   @callback get(id()) :: t() | nil
-  @callback config_params(t()) :: %{(String.t() | {String.t(), String.t()}) => String.t() | [String.t()]}
-  @callback join(t(), user_jid(), nick(), [nodes()]) :: {:ok, {Participant.t(), [nodes()]}} | {:error, Atom.t()}
-  @callback update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: {:ok, {t(), add :: [nodes()], rem :: [nodes()]}} | {:error, Atom.t()}
+  @callback list_by_jid(user_jid()) :: [t()]
+  @callback config_params(t()) :: %{
+              (String.t() | {String.t(), String.t()}) => String.t() | [String.t()]
+            }
+  @callback join(t(), user_jid(), nick(), [nodes()]) ::
+              {:ok, {Participant.t(), [nodes()]}} | {:error, Atom.t()}
+  @callback update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) ::
+              {:ok, {t(), add :: [nodes()], rem :: [nodes()]}} | {:error, Atom.t()}
   @callback leave(t(), user_jid()) :: :ok | {:error, Atom.t()}
   @callback set_nick(t(), user_jid(), nick()) :: :ok | {:error, Atom.t()}
   @callback store_message(t(), Xmlel.t()) :: {:ok, String.t() | nil} | {:error, Atom.t()}
   @callback create(id(), user_jid()) :: {:ok, t()} | {:error, Atom.t()}
   @callback destroy(t(), user_jid()) :: :ok | {:error, Atom.t()}
 
-  defstruct [
-    id: "",
-    name: "",
-    description: "",
-    nodes: ~w[ presence participants messages config ]a,
-    contact: [],
-    owners: [],
-    administrators: [],
-    participants: [],
-    updated_at: NaiveDateTime.utc_now(),
-    inserted_at: NaiveDateTime.utc_now()
-  ]
+  defstruct id: "",
+            name: "",
+            description: "",
+            nodes: ~w[ presence participants messages config ]a,
+            contact: [],
+            owners: [],
+            administrators: [],
+            participants: [],
+            updated_at: NaiveDateTime.utc_now(),
+            inserted_at: NaiveDateTime.utc_now()
 
   def valid_nodes() do
     ~w[
@@ -124,6 +130,7 @@ defmodule Mixite.Channel do
 
   defmacro backend() do
     backend = Application.get_env(:mixite, :channel, Mixite.DummyChannel)
+
     quote do
       unquote(backend)
     end
@@ -154,6 +161,11 @@ defmodule Mixite.Channel do
     Enum.any?(participants, fn %Participant{jid: part_jid} -> part_jid == jid end)
   end
 
+  @spec can_view?(t(), user_jid()) :: boolean()
+  def can_view?(channel, jid) do
+    is_participant_or_owner?(channel, jid) or is_administrator?(channel, jid)
+  end
+
   @spec get_participant(t(), user_jid()) :: Participant.t() | nil
   def get_participant(%Channel{participants: participants}, jid) do
     Enum.find(participants, fn %Participant{jid: part_jid} -> part_jid == jid end)
@@ -162,6 +174,7 @@ defmodule Mixite.Channel do
   @spec split(t(), user_jid()) :: {Participant.t() | nil, t()}
   def split(%Channel{participants: participants} = channel, jid) do
     filter = fn %Participant{jid: user_jid} -> user_jid == jid end
+
     case Enum.split_with(participants, filter) do
       {[], _participants} ->
         {nil, channel}
@@ -171,28 +184,32 @@ defmodule Mixite.Channel do
     end
   end
 
-  @spec get(id()) :: Channel.t() | nil
+  @spec get(id()) :: t() | nil
   def get(id), do: backend().get(id)
 
-  @spec config_params(t()) :: %{ String.t() => String.t() | [String.t()] }
-  def config_params(channel) do
-    backend().config_params(channel)
-  end
+  @spec list_by_jid(user_jid()) :: [t()]
+  def list_by_jid(jid), do: backend().list_by_jid(jid)
 
-  @spec join(t(), user_jid(), nick(), [nodes()]) :: {:ok, {Participant.t(), [nodes()]}} | {:error, Atom.t()}
+  @spec config_params(t()) :: %{String.t() => String.t() | [String.t()]}
+  def config_params(channel), do: backend().config_params(channel)
+
+  @spec join(t(), user_jid(), nick(), [nodes()]) ::
+          {:ok, {Participant.t(), [nodes()]}} | {:error, Atom.t()}
   def join(channel, user_jid, nick, nodes) do
-    nodes = nodes -- (nodes -- valid_nodes())
+    nodes = nodes -- nodes -- valid_nodes()
     backend().join(channel, user_jid, nick, nodes)
   end
 
-  @spec update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) :: {:ok, {t(), add :: [nodes()], rem :: [nodes()]}} | {:error, Atom.t()}
+  @spec update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) ::
+          {:ok, {t(), add :: [nodes()], rem :: [nodes()]}} | {:error, Atom.t()}
   def update(channel, user_jid, add_nodes, rem_nodes) do
-    add_nodes = (add_nodes -- (add_nodes -- valid_nodes())) -- channel.nodes
-    rem_nodes = rem_nodes -- (rem_nodes -- valid_nodes())
-    rem_nodes = rem_nodes -- (rem_nodes -- channel.nodes)
+    add_nodes = (add_nodes -- add_nodes -- valid_nodes()) -- channel.nodes
+    rem_nodes = rem_nodes -- rem_nodes -- valid_nodes()
+    rem_nodes = rem_nodes -- rem_nodes -- channel.nodes
     Logger.debug("channel nodes: #{inspect(channel.nodes)}")
     Logger.debug("remove nodes: #{inspect(rem_nodes)}")
     Logger.debug("add nodes: #{inspect(add_nodes)}")
+
     case backend().update(channel, user_jid, add_nodes, rem_nodes) do
       {:error, _} = error -> error
       {:ok, channel} -> {:ok, {channel, add_nodes, rem_nodes}}

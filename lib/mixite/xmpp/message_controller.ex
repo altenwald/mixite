@@ -3,11 +3,12 @@ defmodule Mixite.Xmpp.MessageController do
 
   require Logger
 
-  import Mixite.Xmpp.ErrorController, only: [
-    send_not_found: 1,
-    send_forbidden: 1,
-    send_feature_not_implemented: 3
-  ]
+  import Mixite.Xmpp.ErrorController,
+    only: [
+      send_not_found: 1,
+      send_forbidden: 1,
+      send_feature_not_implemented: 3
+    ]
 
   alias Exampple.Router.Conn
   alias Exampple.Xml.Xmlel
@@ -15,10 +16,11 @@ defmodule Mixite.Xmpp.MessageController do
   alias Mixite.{Channel, EventManager, Participant}
 
   defp send_broadcast(conn, channel, payload) do
-    from_jid = to_string(Jid.to_bare(conn.to_jid))
+    from_jid = Jid.to_bare(conn.to_jid)
     EventManager.notify({:broadcast, from_jid, channel, payload})
 
     message_id = Channel.gen_uuid()
+
     channel.participants
     |> Enum.each(fn %Participant{jid: jid} ->
       payload
@@ -33,9 +35,11 @@ defmodule Mixite.Xmpp.MessageController do
 
   def broadcast(%Conn{to_jid: %Jid{node: channel_id}} = conn, query) do
     if channel = Channel.get(channel_id) do
-      user_jid = to_string(Jid.to_bare(conn.from_jid))
+      user_jid = Jid.to_bare(conn.from_jid)
+
       if Channel.is_participant?(channel, user_jid) do
         participant = Channel.get_participant(channel, user_jid)
+
         mix_tag = %Xmlel{
           name: "mix",
           attrs: %{"xmlns" => "urn:xmpp:mix:core:1"},
@@ -44,18 +48,27 @@ defmodule Mixite.Xmpp.MessageController do
             %Xmlel{name: "jid", children: [participant.jid]}
           ]
         }
+
         payload = query ++ [mix_tag]
+
         attrs = %{
-          "from" => to_string(Jid.to_bare(conn.from_jid)),
-          "to" => to_string(Jid.to_bare(conn.to_jid)),
+          "from" => Jid.to_bare(conn.from_jid),
+          "to" => Jid.to_bare(conn.to_jid),
           "type" => conn.type,
           "id" => conn.id
         }
+
         message = Xmlel.new("message", attrs, payload)
+
         case Channel.store_message(channel, message) do
           {:error, _} = error ->
             Logger.error("store message error: #{inspect(error)}")
-            send_feature_not_implemented(conn, "en", "broadcast and store message is not supported")
+
+            send_feature_not_implemented(
+              conn,
+              "en",
+              "broadcast and store message is not supported"
+            )
 
           {:ok, nil} ->
             send_broadcast(conn, channel, payload)
@@ -69,6 +82,7 @@ defmodule Mixite.Xmpp.MessageController do
                 "by" => user_jid
               }
             }
+
             payload = payload ++ [sid_tag]
             send_broadcast(conn, channel, payload)
         end

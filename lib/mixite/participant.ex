@@ -7,18 +7,16 @@ defmodule Mixite.Participant do
   alias Mixite.{Channel, Participant}
 
   @type t() :: %__MODULE__{
-    id: String.t(),
-    jid: Channel.user_jid(),
-    nick: String.t(),
-    nodes: [Channel.nodes()]
-  }
+          id: String.t(),
+          jid: Channel.user_jid(),
+          nick: String.t(),
+          nodes: [Channel.nodes()]
+        }
 
-  defstruct [
-    id: nil,
-    jid: nil,
-    nick: nil,
-    nodes: []
-  ]
+  defstruct id: nil,
+            jid: nil,
+            nick: nil,
+            nodes: []
 
   def new(id \\ nil, jid, nick, nodes) do
     %Participant{

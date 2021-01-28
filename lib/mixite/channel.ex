@@ -112,7 +112,8 @@ defmodule Mixite.Channel do
   @callback store_message(t(), Xmlel.t()) :: {:ok, String.t() | nil} | {:error, Atom.t()}
   @callback create(id(), user_jid()) :: {:ok, t()} | {:error, Atom.t()}
   @callback destroy(t(), user_jid()) :: :ok | {:error, Atom.t()}
-  @callback process_node(id(), user_jid(), nodes()) :: :ignore | {:error, {String.t(), String.t(), String.t()}} | Xmlel.t() | [Xmlel.t()]
+  @callback process_node(id(), user_jid(), nodes()) ::
+              :ignore | {:error, {String.t(), String.t(), String.t()}} | Xmlel.t() | [Xmlel.t()]
 
   defstruct id: "",
             name: "",
@@ -248,7 +249,8 @@ defmodule Mixite.Channel do
     backend().destroy(channel, user_jid)
   end
 
-  @spec process_node(id(), user_jid(), nodes()) :: :ignore | {:error, {String.t(), String.t(), String.t()}} | Xmlel.t() | [Xmlel.t()]
+  @spec process_node(id(), user_jid(), nodes()) ::
+          :ignore | {:error, {String.t(), String.t(), String.t()}} | Xmlel.t() | [Xmlel.t()]
   def process_node(id, user_jid, nodes) do
     backend().process_node(id, user_jid, nodes)
   end

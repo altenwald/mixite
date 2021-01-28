@@ -1,11 +1,12 @@
 defmodule Mixite.Xmpp.PubsubController do
   use Exampple.Component
 
-  import Mixite.Xmpp.ErrorController, only: [
-    send_not_found: 1,
-    send_forbidden: 1,
-    send_error: 2
-  ]
+  import Mixite.Xmpp.ErrorController,
+    only: [
+      send_not_found: 1,
+      send_forbidden: 1,
+      send_error: 2
+    ]
 
   alias Exampple.Router.Conn
   alias Exampple.Xml.Xmlel

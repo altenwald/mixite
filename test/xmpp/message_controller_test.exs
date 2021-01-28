@@ -14,7 +14,7 @@ defmodule Mixite.Xmpp.MessageControllerTest do
         </message>
       ])
 
-      assert_stanza_receive ~x[
+      assert_stanza_receive(~x[
         <message from="2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic"
                  id="80"
                  to="mix.example.com"
@@ -27,7 +27,7 @@ defmodule Mixite.Xmpp.MessageControllerTest do
             </text>
           </error>
         </message>
-      ]
+      ])
 
       refute_receive _, 200
     end
@@ -42,7 +42,7 @@ defmodule Mixite.Xmpp.MessageControllerTest do
         </message>
       ])
 
-      assert_stanza_receive ~x[
+      assert_stanza_receive(~x[
         <message from="2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic"
                  id="80"
                  to="non-existent-channel@mix.example.com"
@@ -55,7 +55,7 @@ defmodule Mixite.Xmpp.MessageControllerTest do
             </text>
           </error>
         </message>
-      ]
+      ])
 
       refute_receive _, 200
     end
@@ -70,7 +70,7 @@ defmodule Mixite.Xmpp.MessageControllerTest do
         </message>
       ])
 
-      assert_stanza_receive ~x[
+      assert_stanza_receive(~x[
         <message from="user-id@example.com/hectic"
                  id="80"
                  to="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
@@ -83,7 +83,7 @@ defmodule Mixite.Xmpp.MessageControllerTest do
             </text>
           </error>
         </message>
-      ]
+      ])
 
       refute_receive _, 200
     end
@@ -98,7 +98,7 @@ defmodule Mixite.Xmpp.MessageControllerTest do
         </message>
       ])
 
-      assert_stanza_receive ~x[
+      assert_stanza_receive(~x[
         <message from="2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic"
                  id="error"
                  to="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
@@ -111,7 +111,7 @@ defmodule Mixite.Xmpp.MessageControllerTest do
             </text>
           </error>
         </message>
-      ]
+      ])
 
       refute_receive _, 200
     end

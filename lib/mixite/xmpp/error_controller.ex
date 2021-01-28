@@ -2,6 +2,12 @@ defmodule Mixite.Xmpp.ErrorController do
   use Exampple.Component
   require Logger
 
+  def send_error(conn, {_type, _lang, _text} = error) do
+    conn
+    |> error(error)
+    |> send()
+  end
+
   def send_not_found(conn, lang \\ "en", text \\ "channel not found") do
     conn
     |> error({"item-not-found", lang, text})

@@ -23,6 +23,58 @@ defmodule Mixite.Xmpp.CoreControllerTest do
         </iq>
       ])
     end
+
+    test "not found" do
+      component_received(~x[
+        <iq type='set'
+            to='mix.example.com'
+            from='4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com/hectic'
+            id='77'>
+          <destroy channel='inexistent-channel' xmlns='urn:xmpp:mix:core:1'/>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='mix.example.com'
+            to='4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com/hectic'
+            id='77'>
+          <destroy channel='inexistent-channel' xmlns='urn:xmpp:mix:core:1'/>
+          <error type='cancel'>
+            <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              channel not found
+            </text>
+          </error>
+        </iq>
+      ])
+    end
+
+    test "forbidden" do
+      component_received(~x[
+        <iq type='set'
+            to='mix.example.com'
+            from='user-id@example.com/hectic'
+            id='77'>
+          <destroy channel='be89d464-87d1-4351-bdff-a2cdd7bdb975' xmlns='urn:xmpp:mix:core:1'/>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='mix.example.com'
+            to='user-id@example.com/hectic'
+            id='77'>
+          <destroy channel='be89d464-87d1-4351-bdff-a2cdd7bdb975' xmlns='urn:xmpp:mix:core:1'/>
+          <error type='auth'>
+            <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              forbidden access to channel
+            </text>
+          </error>
+        </iq>
+      ])
+    end
   end
 
   describe "create" do

@@ -4,6 +4,118 @@ defmodule Mixite.Xmpp.MessageControllerTest do
   import Exampple.Xml.Xmlel, only: [sigil_x: 2]
 
   describe "broadcast" do
+    test "incorrectly to the component (no channel)" do
+      component_received(~x[
+        <message type='groupchat'
+            to='mix.example.com'
+            from='2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic'
+            id='80'>
+          <body>Hello world!</body>
+        </message>
+      ])
+
+      assert_stanza_receive ~x[
+        <message from="2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic"
+                 id="80"
+                 to="mix.example.com"
+                 type="error">
+          <body>Hello world!</body>
+          <error type="cancel">
+            <feature-not-implemented xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/>
+            <text lang="en" xmlns="urn:ietf:params:xml:ns:xmpp-stanzas">
+              groupchat messages require a channel
+            </text>
+          </error>
+        </message>
+      ]
+
+      refute_receive _, 200
+    end
+
+    test "incorrectly to a non-existent channel" do
+      component_received(~x[
+        <message type='groupchat'
+            to='non-existent-channel@mix.example.com'
+            from='2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic'
+            id='80'>
+          <body>Hello world!</body>
+        </message>
+      ])
+
+      assert_stanza_receive ~x[
+        <message from="2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic"
+                 id="80"
+                 to="non-existent-channel@mix.example.com"
+                 type="error">
+          <body>Hello world!</body>
+          <error type='cancel'>
+            <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              channel not found
+            </text>
+          </error>
+        </message>
+      ]
+
+      refute_receive _, 200
+    end
+
+    test "incorrectly to a non-belonging channel" do
+      component_received(~x[
+        <message type='groupchat'
+            to='c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com'
+            from='user-id@example.com/hectic'
+            id='80'>
+          <body>Hello world!</body>
+        </message>
+      ])
+
+      assert_stanza_receive ~x[
+        <message from="user-id@example.com/hectic"
+                 id="80"
+                 to="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
+                 type="error">
+          <body>Hello world!</body>
+          <error type='auth'>
+            <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              forbidden access to channel
+            </text>
+          </error>
+        </message>
+      ]
+
+      refute_receive _, 200
+    end
+
+    test "incorrectly storage buggy" do
+      component_received(~x[
+        <message type='groupchat'
+            to='c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com'
+            from='2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic'
+            id='error'>
+          <body>Hello world!</body>
+        </message>
+      ])
+
+      assert_stanza_receive ~x[
+        <message from="2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic"
+                 id="error"
+                 to="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
+                 type="error">
+          <body>Hello world!</body>
+          <error type='cancel'>
+            <feature-not-implemented xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              broadcast and store message is not supported
+            </text>
+          </error>
+        </message>
+      ]
+
+      refute_receive _, 200
+    end
+
     test "correctly" do
       component_received(~x[
         <message type='groupchat'

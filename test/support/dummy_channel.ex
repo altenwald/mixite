@@ -131,10 +131,12 @@ defmodule Mixite.DummyChannel do
     }
   }
 
+  @impl Channel
   def get(id) do
     @data[id]
   end
 
+  @impl Channel
   def list_by_jid(jid) do
     Enum.filter(@data, fn {_, channel} ->
       jid in channel.owners or
@@ -147,7 +149,8 @@ defmodule Mixite.DummyChannel do
   def config_params(_channel) do
     %{
       "Messages Node Subscription" => "allowed",
-      "No Private Messages" => "true"
+      "No Private Messages" => "true",
+      {"ENV", "hidden"} => "test"
     }
   end
 
@@ -232,5 +235,26 @@ defmodule Mixite.DummyChannel do
     else
       {:error, :forbidden}
     end
+  end
+
+  @impl Channel
+  def process_node(_channel_id, _user_jid, "urn:xmpp:mixite:0") do
+    %Xmlel{name: "mixite", children: ["Hello world!"]}
+  end
+
+  def process_node(_channel_id, _user_jid, "urn:xmpp:mixite:1") do
+    [
+      %Xmlel{name: "mixite", children: ["Hello world!"]},
+      %Xmlel{name: "mixite", children: ["Hola mundo!"]},
+      %Xmlel{name: "mixite", children: ["Ciao mondo!"]}
+    ]
+  end
+
+  def process_node(_channel_id, _user_jid, "urn:xmpp:mixite:error:0") do
+    {:error, {"feature-not-implemented", "en", "mixite error!"}}
+  end
+
+  def process_node(_channel_id, _user_id, _nodes) do
+    :ignore
   end
 end

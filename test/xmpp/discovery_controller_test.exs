@@ -29,15 +29,14 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
     test "disco#info from a channel" do
       user = "c3b10914-905d-4920-a5cd-146a0061e478@example.com/res"
 
-      component_received(
-        ~x[
-        <iq type='get' id='1' to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com' from='#{
-          user
-        }'>
+      component_received(~x[
+        <iq type='get'
+            id='1'
+            to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            from='#{user}'>
           <query xmlns='http://jabber.org/protocol/disco#info'/>
         </iq>
-      ]
-      )
+      ])
 
       assert_stanza_receive(~x[
         <iq type='result' id='1' to='#{user}' from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'>
@@ -47,6 +46,59 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
             <feature var='urn:xmpp:mix:core:1'/>
             <feature var='urn:xmpp:mam:2'/>
           </query>
+        </iq>
+      ])
+    end
+
+    test "disco#info from a non-existent channel" do
+      user = "c3b10914-905d-4920-a5cd-146a0061e478@example.com/res"
+
+      component_received(~x[
+        <iq type='get'
+            id='1'
+            to='inexistent-channel@mixite.example.com'
+            from='#{user}'>
+          <query xmlns='http://jabber.org/protocol/disco#info'/>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            id='1'
+            to='#{user}'
+            from='inexistent-channel@mixite.example.com'>
+          <query xmlns='http://jabber.org/protocol/disco#info'/>
+          <error type='cancel'>
+            <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              channel not found
+            </text>
+          </error>
+        </iq>
+      ])
+    end
+
+    test "disco#info from a not belonging channel" do
+      user = "user-id@example.com/res"
+
+      component_received(~x[
+        <iq type='get'
+            id='1'
+            to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            from='#{user}'>
+          <query xmlns='http://jabber.org/protocol/disco#info'/>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error' id='1' to='#{user}' from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'>
+          <query xmlns='http://jabber.org/protocol/disco#info'/>
+          <error type='auth'>
+            <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              forbidden access to channel
+            </text>
+          </error>
         </iq>
       ])
     end
@@ -73,18 +125,20 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
     test "disco#items from a channel" do
       user = "c3b10914-905d-4920-a5cd-146a0061e478@example.com/res"
 
-      component_received(
-        ~x[
-        <iq type='get' id='1' to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com' from='#{
-          user
-        }'>
+      component_received(~x[
+        <iq type='get'
+            id='1'
+            to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            from='#{user}'>
           <query xmlns='http://jabber.org/protocol/disco#items' node='mix'/>
         </iq>
-      ]
-      )
+      ])
 
       assert_stanza_receive(~x[
-        <iq type='result' id='1' to='#{user}' from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'>
+        <iq type='result'
+            id='1'
+            to='#{user}'
+            from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'>
           <query xmlns='http://jabber.org/protocol/disco#items' node='mix'>
             <item jid='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
                   node='urn:xmpp:mix:nodes:config'/>
@@ -99,18 +153,45 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
       ])
     end
 
+    test "disco#items from a non-existent channel" do
+      user = "c3b10914-905d-4920-a5cd-146a0061e478@example.com/res"
+
+      component_received(~x[
+        <iq type='get'
+            id='1'
+            to='inexistent-channel@mixite.example.com'
+            from='#{user}'>
+          <query xmlns='http://jabber.org/protocol/disco#items' node='mix'/>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            id='1'
+            to='#{user}'
+            from='inexistent-channel@mixite.example.com'>
+          <query xmlns='http://jabber.org/protocol/disco#items' node='mix'/>
+          <error type='cancel'>
+            <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              channel not found
+            </text>
+          </error>
+        </iq>
+      ])
+    end
+
     test "disco#items from a not belonging channel" do
       user = "user-id@example.com/res"
 
-      component_received(
-        ~x[
-        <iq type='get' id='1' to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com' from='#{
-          user
-        }'>
+      component_received(~x[
+        <iq type='get'
+            id='1'
+            to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            from='#{user}'>
           <query xmlns='http://jabber.org/protocol/disco#items' node='mix'/>
         </iq>
-      ]
-      )
+      ])
 
       assert_stanza_receive(~x[
         <iq type='error' id='1' to='#{user}' from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'>

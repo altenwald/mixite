@@ -7,7 +7,7 @@ defmodule Mixite.Xmpp.CoreController do
     only: [
       send_not_found: 1,
       send_forbidden: 1,
-      send_conflict: 1,
+      send_conflict: 3,
       send_feature_not_implemented: 3,
       send_internal_error: 1
     ]
@@ -79,7 +79,7 @@ defmodule Mixite.Xmpp.CoreController do
         %Xmlel{name: "update-subscription"} -> update(conn, query, channel)
         %Xmlel{name: "leave"} -> leave(conn, query, channel)
         %Xmlel{name: "setnick"} -> set_nick(conn, query["nick"], channel)
-        _ -> send_feature_not_implemented(conn, "en", "child unknown: #{to_string(query)}")
+        %Xmlel{name: name} -> send_feature_not_implemented(conn, "en", "child unknown: #{name}")
       end
     else
       send_not_found(conn)
@@ -98,7 +98,7 @@ defmodule Mixite.Xmpp.CoreController do
 
         {:error, :conflict} ->
           Logger.error("user #{user_jid} cannot change nick to #{nick} because conflict")
-          send_conflict(conn)
+          send_conflict(conn, "en", "nickname already assigned")
 
         {:error, error} ->
           Logger.error("user #{user_jid} cannot change nick to #{nick} because #{inspect(error)}")

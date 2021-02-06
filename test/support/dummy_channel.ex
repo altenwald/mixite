@@ -172,8 +172,8 @@ defmodule Mixite.DummyChannel do
     {:ok, {participant, intersect_nodes}}
   end
 
-  def update(_channel, "fail@example.com", _add_nodes, _rem_nodes) do
-    {:error, :forbidden}
+  def update(_channel, "c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com", _add_nodes, _rem_nodes) do
+    {:error, :unknown}
   end
 
   def update(_channel, "missing@example.com", _add_nodes, _rem_nodes) do
@@ -197,12 +197,12 @@ defmodule Mixite.DummyChannel do
     end
   end
 
-  def set_nick(%Channel{} = channel, user_jid, _nick) do
+  def set_nick(%Channel{} = channel, user_jid, nick) do
     if Channel.is_participant?(channel, user_jid) do
-      if channel.name == "duplicated" do
-        {:error, :conflict}
-      else
-        :ok
+      case nick do
+        "duplicated" -> {:error, :conflict}
+        "error" -> {:error, :unknown}
+        _ -> :ok
       end
     else
       {:error, :forbidden}

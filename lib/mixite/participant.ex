@@ -28,6 +28,14 @@ defmodule Mixite.Participant do
   end
 
   defimpl String.Chars, for: __MODULE__ do
+    @doc """
+    String representation for participant.
+
+    Examples:
+        iex> %Mixite.Participant{jid: "alice@example.com"}
+        iex> |> to_string()
+        "#Participant<jid:alice@example.com>"
+    """
     def to_string(%Participant{jid: jid}), do: "#Participant<jid:#{jid}>"
   end
 end

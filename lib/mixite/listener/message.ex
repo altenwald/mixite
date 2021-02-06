@@ -1,9 +1,7 @@
 defmodule Mixite.Listener.Message do
   use GenStage
 
-  alias Exampple.Component
   alias Exampple.Xml.Xmlel
-  alias Exampple.Xmpp.Stanza
   alias Mixite.{Channel, Participant}
 
   @producer Mixite.EventManager
@@ -32,13 +30,7 @@ defmodule Mixite.Listener.Message do
         ]
       })
 
-    channel.participants
-    |> Enum.each(fn %Participant{jid: jid} ->
-      [payload]
-      |> Stanza.message(from_jid, Channel.gen_uuid(), jid)
-      |> Component.send()
-    end)
-
+    Channel.send_broadcast(channel, [payload], from_jid, nil)
     {:noreply, [], state}
   end
 
@@ -59,13 +51,8 @@ defmodule Mixite.Listener.Message do
         ]
       })
 
-    [%Participant{jid: user_jid} | channel.participants]
-    |> Enum.each(fn %Participant{jid: jid} ->
-      [payload]
-      |> Stanza.message(from_jid, Channel.gen_uuid(), jid)
-      |> Component.send()
-    end)
-
+    channel = %Channel{participants: [%Participant{jid: user_jid} | channel.participants]}
+    Channel.send_broadcast(channel, [payload], from_jid, nil)
     {:noreply, [], state}
   end
 

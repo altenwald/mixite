@@ -12,21 +12,12 @@ defmodule Mixite.Xmpp.MessageController do
 
   alias Exampple.Router.Conn
   alias Exampple.Xml.Xmlel
-  alias Exampple.Xmpp.{Jid, Stanza}
-  alias Mixite.{Channel, EventManager, Participant}
+  alias Exampple.Xmpp.Jid
+  alias Mixite.Channel
 
   defp send_broadcast(conn, channel, payload) do
     from_jid = Jid.to_bare(conn.to_jid)
-    EventManager.notify({:broadcast, from_jid, channel, payload})
-
-    message_id = Channel.gen_uuid()
-
-    channel.participants
-    |> Enum.each(fn %Participant{jid: jid} ->
-      payload
-      |> Stanza.message(from_jid, message_id, jid, "groupchat")
-      |> send()
-    end)
+    Channel.send_broadcast(channel, payload, from_jid)
   end
 
   def broadcast(%Conn{to_jid: %Jid{node: ""}} = conn, _query) do

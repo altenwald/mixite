@@ -34,7 +34,13 @@ defmodule Mixite.Xmpp.ErrorController do
 
   def send_internal_error(conn, lang \\ "en", text \\ "an internal error happened") do
     conn
-    |> error({"internal-error", lang, text})
+    |> error({"internal-server-error", lang, text})
+    |> send()
+  end
+
+  def send_bad_request(conn, lang \\ "en", text \\ "wrong request for query") do
+    conn
+    |> error({"bad-request", lang, text})
     |> send()
   end
 

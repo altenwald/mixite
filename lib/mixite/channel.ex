@@ -63,8 +63,10 @@ defmodule Mixite.Channel do
 
   require Logger
 
+  alias Exampple.Component
   alias Exampple.Xml.Xmlel
-  alias Mixite.{Channel, Participant}
+  alias Exampple.Xmpp.Stanza
+  alias Mixite.{Channel, EventManager, Participant}
 
   @type mix_node() :: :presence | :participants | :messages | :config | :info
 
@@ -136,6 +138,15 @@ defmodule Mixite.Channel do
     ]
   end
 
+  @doc """
+  Get the backend implementation for Mixite.
+
+  Examples:
+
+      iex> require Mixite.Channel
+      iex> Mixite.Channel.backend()
+      Mixite.DummyChannel
+  """
   defmacro backend() do
     backend = Application.get_env(:mixite, :channel, Mixite.DummyChannel)
 
@@ -146,39 +157,211 @@ defmodule Mixite.Channel do
 
   def gen_uuid, do: Application.get_env(:mixite, :uuid_value, UUID.uuid4())
 
+  @doc """
+  Let us know if a JID is part of the participants or owners for the channel.
+
+  Examples:
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants, owners: ["user3@example.com"]}
+      iex> |> Mixite.Channel.is_participant_or_owner?("user3@example.com")
+      true
+
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants, owners: ["user3@example.com"]}
+      iex> |> Mixite.Channel.is_participant_or_owner?("user2@example.com")
+      true
+
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants}
+      iex> |> Mixite.Channel.is_participant_or_owner?("user4@example.com")
+      false
+  """
   @spec is_participant_or_owner?(t(), user_jid()) :: boolean()
   def is_participant_or_owner?(channel, jid) do
     is_participant?(channel, jid) or is_owner?(channel, jid)
   end
 
+  @doc """
+  Let us know if a JID is part of the administrators or owners for the channel.
+
+  Examples:
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants, administrators: ["user3@example.com"]}
+      iex> |> Mixite.Channel.is_administrator_or_owner?("user3@example.com")
+      true
+
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants, owners: ["user3@example.com"]}
+      iex> |> Mixite.Channel.is_administrator_or_owner?("user3@example.com")
+      true
+
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants}
+      iex> |> Mixite.Channel.is_administrator_or_owner?("user1@example.com")
+      false
+  """
   @spec is_administrator_or_owner?(t(), user_jid()) :: boolean()
   def is_administrator_or_owner?(channel, jid) do
     is_administrator?(channel, jid) or is_owner?(channel, jid)
   end
 
+  @doc """
+  Let us know if a JID is part of the owners for the channel.
+
+  Examples:
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants, owners: ["user3@example.com"]}
+      iex> |> Mixite.Channel.is_owner?("user3@example.com")
+      true
+
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants}
+      iex> |> Mixite.Channel.is_owner?("user1@example.com")
+      false
+  """
   @spec is_owner?(t(), user_jid()) :: boolean()
   def is_owner?(%Channel{owners: owners}, jid), do: jid in owners
 
+  @doc """
+  Let us know if a JID is part of the administrators for the channel.
+
+  Examples:
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants, administrators: ["user3@example.com"]}
+      iex> |> Mixite.Channel.is_administrator?("user3@example.com")
+      true
+
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants}
+      iex> |> Mixite.Channel.is_administrator?("user1@example.com")
+      false
+  """
   @spec is_administrator?(t(), user_jid()) :: boolean()
   def is_administrator?(%Channel{administrators: administrators}, jid) do
     jid in administrators
   end
 
+  @doc """
+  Let us know if it's a participant or not.
+
+  Examples:
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants}
+      iex> |> Mixite.Channel.is_participant?("user3@example.com")
+      true
+
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants}
+      iex> |> Mixite.Channel.is_participant?("user4@example.com")
+      false
+  """
   @spec is_participant?(t(), user_jid()) :: boolean()
   def is_participant?(%Channel{participants: participants}, jid) do
     Enum.any?(participants, fn %Participant{jid: part_jid} -> part_jid == jid end)
   end
 
+  @doc """
+  Let us know if the user can view the information for the channel.
+
+  Examples:
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants}
+      iex> |> Mixite.Channel.can_view?("user3@example.com")
+      true
+
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants}
+      iex> |> Mixite.Channel.can_view?("user4@example.com")
+      false
+  """
   @spec can_view?(t(), user_jid()) :: boolean()
   def can_view?(channel, jid) do
     is_participant_or_owner?(channel, jid) or is_administrator?(channel, jid)
   end
 
+  @doc """
+  Get a participant from a channel if it exists.
+
+  Examples:
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants}
+      iex> |> Mixite.Channel.get_participant("user3@example.com")
+      %Mixite.Participant{jid: "user3@example.com"}
+
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants}
+      iex> |> Mixite.Channel.get_participant("user4@example.com")
+      nil
+  """
   @spec get_participant(t(), user_jid()) :: Participant.t() | nil
   def get_participant(%Channel{participants: participants}, jid) do
     Enum.find(participants, fn %Participant{jid: part_jid} -> part_jid == jid end)
   end
 
+  @doc """
+  Split participant with the given `user_jid` from the rest of the
+  participants.
+
+  Examples:
+      iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
+      iex> p2 = %Mixite.Participant{jid: "user2@example.com"}
+      iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
+      iex> participants = [p1, p2, p3]
+      iex> %Mixite.Channel{participants: participants}
+      iex> |> Mixite.Channel.split("user2@example.com")
+      {%Mixite.Participant{jid: "user2@example.com"},
+       %Mixite.Channel{participants: [
+         %Mixite.Participant{jid: "user1@example.com"},
+         %Mixite.Participant{jid: "user3@example.com"}]}}
+  """
   @spec split(t(), user_jid()) :: {Participant.t() | nil, t()}
   def split(%Channel{participants: participants} = channel, jid) do
     filter = fn %Participant{jid: user_jid} -> user_jid == jid end
@@ -255,7 +438,28 @@ defmodule Mixite.Channel do
     backend().process_node(id, user_jid, nodes)
   end
 
+  def send_broadcast(channel, payload, from_jid, type \\ "groupchat") do
+    EventManager.notify({:broadcast, from_jid, channel, payload})
+
+    message_id = Channel.gen_uuid()
+
+    channel.participants
+    |> Enum.each(fn %Participant{jid: jid} ->
+      payload
+      |> Stanza.message(from_jid, message_id, jid, type)
+      |> Component.send()
+    end)
+  end
+
   defimpl String.Chars, for: __MODULE__ do
+    @doc """
+    Convert channel into a string representation.
+
+    Examples:
+        iex> %Mixite.Channel{id: "ID"}
+        iex> |> to_string()
+        "#Channel<id:ID>"
+    """
     def to_string(%Channel{id: id}), do: "#Channel<id:#{id}>"
   end
 end

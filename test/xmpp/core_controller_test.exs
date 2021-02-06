@@ -98,6 +98,32 @@ defmodule Mixite.Xmpp.CoreControllerTest do
       ])
     end
 
+    test "named channel incorrectly" do
+      component_received(~x[
+        <iq type='set'
+            to='mix.example.com'
+            from='fail@example.com/hectic'
+            id='90'>
+          <create channel='fa7c9b6a-d5c2-45cb-b807-258116df6548' xmlns='urn:xmpp:mix:core:1'/>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='mix.example.com'
+            to='fail@example.com/hectic'
+            id='90'>
+          <create channel='fa7c9b6a-d5c2-45cb-b807-258116df6548' xmlns='urn:xmpp:mix:core:1'/>
+          <error type='wait'>
+            <internal-server-error xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              an internal error happened
+            </text>
+          </error>
+        </iq>
+      ])
+    end
+
     test "ad-hoc channel correctly" do
       component_received(~x[
         <iq type='set'
@@ -147,6 +173,42 @@ defmodule Mixite.Xmpp.CoreControllerTest do
         </iq>
       ])
     end
+
+    test "incorrectly" do
+      component_received(~x[
+        <iq type='set'
+            to='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            from='c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com/hectic'
+            id='44'>
+          <update-subscription xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <unsubscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <unsubscribe node='urn:xmpp:mix:nodes:info'/>
+          </update-subscription>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            to='c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com/hectic'
+            id='44'>
+          <update-subscription xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <unsubscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <unsubscribe node='urn:xmpp:mix:nodes:info'/>
+          </update-subscription>
+          <error type='wait'>
+            <internal-server-error xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              an internal error happened
+            </text>
+          </error>
+        </iq>
+      ])
+    end
   end
 
   describe "set nick" do
@@ -170,6 +232,120 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           <setnick xmlns='urn:xmpp:mix:core:1'>
             <nick>ENIAC</nick>
           </setnick>
+        </iq>
+      ])
+    end
+
+    test "no changes" do
+      component_received(~x[
+        <iq type='set'
+            to='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            from='8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com/hectic'
+            id='60'>
+          <setnick xmlns='urn:xmpp:mix:core:1'>
+            <nick>grace-hopper</nick>
+          </setnick>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='result'
+            from='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            to='8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com/hectic'
+            id='60'>
+          <setnick xmlns='urn:xmpp:mix:core:1'>
+            <nick>grace-hopper</nick>
+          </setnick>
+        </iq>
+      ])
+    end
+
+    test "conflict" do
+      component_received(~x[
+        <iq type='set'
+            to='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            from='8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com/hectic'
+            id='60'>
+          <setnick xmlns='urn:xmpp:mix:core:1'>
+            <nick>duplicated</nick>
+          </setnick>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            to='8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com/hectic'
+            id='60'>
+          <setnick xmlns='urn:xmpp:mix:core:1'>
+            <nick>duplicated</nick>
+          </setnick>
+          <error type='cancel'>
+            <conflict xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              nickname already assigned
+            </text>
+          </error>
+        </iq>
+      ])
+    end
+
+    test "unknown error" do
+      component_received(~x[
+        <iq type='set'
+            to='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            from='8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com/hectic'
+            id='60'>
+          <setnick xmlns='urn:xmpp:mix:core:1'>
+            <nick>error</nick>
+          </setnick>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            to='8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com/hectic'
+            id='60'>
+          <setnick xmlns='urn:xmpp:mix:core:1'>
+            <nick>error</nick>
+          </setnick>
+          <error type='wait'>
+            <internal-server-error xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              an internal error happened
+            </text>
+          </error>
+        </iq>
+      ])
+    end
+
+    test "forbidden" do
+      component_received(~x[
+        <iq type='set'
+            to='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            from='b587d8fc-c80a-4c41-b60f-c7f0c00cf112@example.com/hectic'
+            id='60'>
+          <setnick xmlns='urn:xmpp:mix:core:1'>
+            <nick>ilegit</nick>
+          </setnick>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            to='b587d8fc-c80a-4c41-b60f-c7f0c00cf112@example.com/hectic'
+            id='60'>
+          <setnick xmlns='urn:xmpp:mix:core:1'>
+            <nick>ilegit</nick>
+          </setnick>
+          <error type='auth'>
+            <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              forbidden access to channel
+            </text>
+          </error>
         </iq>
       ])
     end
@@ -234,6 +410,172 @@ defmodule Mixite.Xmpp.CoreControllerTest do
         end
 
       assert_all_stanza_receive(stanzas)
+    end
+
+    test "incorrectly to no-channel" do
+      component_received(~x[
+        <iq type='set'
+            to='mix.example.com'
+            from='7b62547e-704c-4961-8e21-9248e12c427d@example.com/hectic'
+            id='44'>
+          <join xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <subscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <subscribe node='urn:xmpp:mix:nodes:info'/>
+            <nick>third witch</nick>
+          </join>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='mix.example.com'
+            to='7b62547e-704c-4961-8e21-9248e12c427d@example.com/hectic'
+            id='44'>
+          <join xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <subscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <subscribe node='urn:xmpp:mix:nodes:info'/>
+            <nick>third witch</nick>
+          </join>
+          <error type='cancel'>
+            <feature-not-implemented xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              namespace urn:xmpp:mix:core:1 requires a channel
+            </text>
+          </error>
+        </iq>
+      ])
+    end
+
+    test "incorrectly bad request" do
+      component_received(~x[
+        <iq type='set'
+            to='463e340a-9f0b-448e-af5a-964150d418d6@mix.example.com'
+            from='7b62547e-704c-4961-8e21-9248e12c427d@example.com/hectic'
+            id='44'>
+          <join xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <subscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <subscribe node='urn:xmpp:mix:nodes:info'/>
+            <nick>third witch</nick>
+          </join>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='463e340a-9f0b-448e-af5a-964150d418d6@mix.example.com'
+            to='7b62547e-704c-4961-8e21-9248e12c427d@example.com/hectic'
+            id='44'>
+          <join xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <subscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <subscribe node='urn:xmpp:mix:nodes:info'/>
+            <nick>third witch</nick>
+          </join>
+          <error type='cancel'>
+            <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              channel not found
+            </text>
+          </error>
+        </iq>
+      ])
+    end
+
+    test "incorrectly using unknown query tag" do
+      component_received(~x[
+        <iq type='set'
+            to='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            from='7b62547e-704c-4961-8e21-9248e12c427d@example.com/hectic'
+            id='44'>
+          <screw xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <subscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <subscribe node='urn:xmpp:mix:nodes:info'/>
+            <nick>third witch</nick>
+          </screw>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            to='7b62547e-704c-4961-8e21-9248e12c427d@example.com/hectic'
+            id='44'>
+          <screw xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <subscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <subscribe node='urn:xmpp:mix:nodes:info'/>
+            <nick>third witch</nick>
+          </screw>
+          <error type='cancel'>
+            <feature-not-implemented xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              child unknown: screw
+            </text>
+          </error>
+        </iq>
+      ])
+    end
+
+    test "incorrectly more than one child" do
+      component_received(~x[
+        <iq type='set'
+            to='b3cd8246-67e8-44e0-a3b7-06e07ff7e643@mix.example.com'
+            from='7b62547e-704c-4961-8e21-9248e12c427d@example.com/hectic'
+            id='44'>
+          <join xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <subscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <subscribe node='urn:xmpp:mix:nodes:info'/>
+            <nick>third witch</nick>
+          </join>
+          <join xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <subscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <subscribe node='urn:xmpp:mix:nodes:info'/>
+            <nick>third witch</nick>
+          </join>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='b3cd8246-67e8-44e0-a3b7-06e07ff7e643@mix.example.com'
+            to='7b62547e-704c-4961-8e21-9248e12c427d@example.com/hectic'
+            id='44'>
+          <join xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <subscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <subscribe node='urn:xmpp:mix:nodes:info'/>
+            <nick>third witch</nick>
+          </join>
+          <join xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <subscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <subscribe node='urn:xmpp:mix:nodes:info'/>
+            <nick>third witch</nick>
+          </join>
+          <error type='cancel'>
+            <feature-not-implemented xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              iq must have only and at least one child
+            </text>
+          </error>
+        </iq>
+      ])
     end
   end
 

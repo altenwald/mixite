@@ -451,6 +451,86 @@ defmodule Mixite.Channel do
     end)
   end
 
+  defp field(name, type \\ nil, value)
+  defp field(_name, _type, nil), do: []
+  defp field(_name, _type, []), do: []
+
+  defp field(name, type, value) do
+    children =
+      if is_list(value) do
+        for v <- value, do: %Xmlel{name: "value", children: [v]}
+      else
+        [%Xmlel{name: "value", children: [value]}]
+      end
+
+    attrs =
+      if type do
+        %{"var" => name, "type" => type}
+      else
+        %{"var" => name}
+      end
+
+    [%Xmlel{name: "field", attrs: attrs, children: children}]
+  end
+
+  def render(channel, "urn:xmpp:mix:nodes:config") do
+    %Xmlel{
+      name: "item",
+      attrs: %{"id" => to_string(channel.updated_at)},
+      children: [
+        %Xmlel{
+          name: "x",
+          attrs: %{"xmlns" => "jabber:x:data", "type" => "result"},
+          children:
+            field("FORM_TYPE", "hidden", "urn:xmpp:mix:core:1") ++
+              field("Owner", channel.owners) ++
+              field("Administrator", channel.administrators) ++
+              Enum.map(Channel.config_params(channel), fn
+                {{key, type}, value} -> hd(field(key, type, value))
+                {key, value} -> hd(field(key, value))
+              end)
+        }
+      ]
+    }
+  end
+
+  def render(channel, "urn:xmpp:mix:nodes:info") do
+    %Xmlel{
+      name: "item",
+      attrs: %{"id" => to_string(channel.updated_at)},
+      children: [
+        %Xmlel{
+          name: "x",
+          attrs: %{"xmlns" => "jabber:x:data", "type" => "result"},
+          children:
+            field("FORM_TYPE", "hidden", "urn:xmpp:mix:core:1") ++
+              field("Name", channel.name) ++
+              field("Description", channel.description) ++
+              field("Contact", channel.contact)
+        }
+      ]
+    }
+  end
+
+  def render(channel, "urn:xmpp:mix:nodes:participants") do
+    for participant <- channel.participants do
+      %Xmlel{
+        name: "item",
+        attrs: %{"id" => participant.id},
+        children: [
+          %Xmlel{
+            name: "participant",
+            attrs: %{"xmlns" => "urn:xmpp:mix:core:1"},
+            children: [
+              %Xmlel{name: "nick", children: [participant.nick]},
+              %Xmlel{name: "jid", children: [participant.jid]}
+            ]
+          }
+        ]
+      }
+    end
+  end
+
   defimpl String.Chars, for: __MODULE__ do
     @doc """
     Convert channel into a string representation.

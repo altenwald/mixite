@@ -531,6 +531,15 @@ defmodule Mixite.Channel do
     end
   end
 
+  def render(channel, "urn:xmpp:mix:nodes:allowed") do
+    for participant <- channel.participants do
+      %Xmlel{
+        name: "item",
+        attrs: %{"id" => participant.id}
+      }
+    end
+  end
+
   defimpl String.Chars, for: __MODULE__ do
     @doc """
     Convert channel into a string representation.

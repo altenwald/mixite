@@ -120,11 +120,11 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             to='c3b10914-905d-4920-a5cd-146a0061e478@example.com/UUID-c8y/1573'
             type='result'>
           <pubsub xmlns='http://jabber.org/protocol/pubsub'>
-            <items node='urn:xmpp:mix:nodes:config'>
+            <items xmlns='urn:xmpp:mix:admin:0' node='urn:xmpp:mix:nodes:config'>
               <item id='2020-09-23 00:36:20.363444'>
                 <x xmlns='jabber:x:data' type='result'>
                   <field var='FORM_TYPE' type='hidden'>
-                    <value>urn:xmpp:mix:core:1</value>
+                    <value>urn:xmpp:mix:admin:0</value>
                   </field>
                   <field var='Owner'>
                     <value>4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com</value>
@@ -164,11 +164,11 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             to='8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com/UUID-c8y/1573'
             type='result'>
           <pubsub xmlns='http://jabber.org/protocol/pubsub'>
-            <items node='urn:xmpp:mix:nodes:config'>
+            <items xmlns='urn:xmpp:mix:admin:0' node='urn:xmpp:mix:nodes:config'>
               <item id='2020-10-09 00:45:55.363444'>
                 <x xmlns='jabber:x:data' type='result'>
                   <field var='FORM_TYPE' type='hidden'>
-                    <value>urn:xmpp:mix:core:1</value>
+                    <value>urn:xmpp:mix:admin:0</value>
                   </field>
                   <field var='Owner'>
                     <value>8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com</value>

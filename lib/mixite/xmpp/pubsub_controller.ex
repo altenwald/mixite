@@ -108,7 +108,14 @@ defmodule Mixite.Xmpp.PubsubController do
       children: [
         %Xmlel{
           name: "items",
-          attrs: %{"node" => node},
+          attrs:
+            case node do
+              "urn:xmpp:mix:nodes:config" ->
+                %{"xmlns" => "urn:xmpp:mix:admin:0", "node" => node}
+
+              _ ->
+                %{"node" => node}
+            end,
           children: items
         }
       ]

@@ -482,7 +482,7 @@ defmodule Mixite.Channel do
           name: "x",
           attrs: %{"xmlns" => "jabber:x:data", "type" => "result"},
           children:
-            field("FORM_TYPE", "hidden", "urn:xmpp:mix:core:1") ++
+            field("FORM_TYPE", "hidden", "urn:xmpp:mix:admin:0") ++
               field("Owner", channel.owners) ++
               field("Administrator", channel.administrators) ++
               Enum.map(Channel.config_params(channel), fn

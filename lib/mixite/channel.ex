@@ -535,7 +535,7 @@ defmodule Mixite.Channel do
     for participant <- channel.participants do
       %Xmlel{
         name: "item",
-        attrs: %{"id" => participant.id}
+        attrs: %{"id" => participant.jid}
       }
     end
   end

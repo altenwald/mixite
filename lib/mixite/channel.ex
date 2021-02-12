@@ -50,6 +50,11 @@ defmodule Mixite.Channel do
       end
 
       @impl Channel
+      def info_params(_channel) do
+        %{}
+      end
+
+      @impl Channel
       def valid_nodes() do
         ~w[
           config
@@ -69,6 +74,7 @@ defmodule Mixite.Channel do
                      update: 3,
                      destroy: 2,
                      config_params: 1,
+                     info_params: 1,
                      valid_nodes: 0
     end
   end
@@ -113,6 +119,9 @@ defmodule Mixite.Channel do
   @callback get(id()) :: t() | nil
   @callback list_by_jid(user_jid()) :: [t()]
   @callback config_params(t()) :: %{
+              (String.t() | {String.t(), String.t()}) => String.t() | [String.t()]
+            }
+  @callback info_params(t()) :: %{
               (String.t() | {String.t(), String.t()}) => String.t() | [String.t()]
             }
   @callback join(t(), user_jid(), nick(), [nodes()]) ::
@@ -408,6 +417,9 @@ defmodule Mixite.Channel do
 
   @spec config_params(t()) :: %{String.t() => String.t() | [String.t()]}
   def config_params(channel), do: backend().config_params(channel)
+
+  @spec info_params(t()) :: %{String.t() => String.t() | [String.t()]}
+  def info_params(channel), do: backend().info_params(channel)
 
   @spec join(t(), user_jid(), nick(), [nodes()]) ::
           {:ok, {Participant.t(), [nodes()]}} | {:error, Atom.t()}

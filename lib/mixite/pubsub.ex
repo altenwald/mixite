@@ -133,7 +133,11 @@ defmodule Mixite.Pubsub do
             field("FORM_TYPE", "hidden", @ns_core) ++
               field("Name", channel.name) ++
               field("Description", channel.description) ++
-              field("Contact", channel.contact)
+              field("Contact", channel.contact) ++
+              Enum.map(Channel.info_params(channel), fn
+                {{key, type}, value} -> hd(field(key, type, value))
+                {key, value} -> hd(field(key, value))
+              end)
         }
       ]
     }

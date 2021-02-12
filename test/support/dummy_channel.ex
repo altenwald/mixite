@@ -154,6 +154,12 @@ defmodule Mixite.DummyChannel do
     }
   end
 
+  def info_params(channel) do
+    %{
+      "Created At" => to_string(channel.inserted_at)
+    }
+  end
+
   def join(_channel, "fail@example.com", _nick, _nodes) do
     {:error, :forbidden}
   end

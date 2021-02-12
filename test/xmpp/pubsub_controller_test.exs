@@ -48,6 +48,9 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
                   <field var='Description'>
                     <value>Berkeley University</value>
                   </field>
+                  <field var='Created At'>
+                    <value>2020-09-23 00:36:20.363444</value>
+                  </field>
                 </x>
               </item>
             </items>
@@ -75,6 +78,9 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
                       </field>
                       <field var='Description'>
                         <value>Berkeley University</value>
+                      </field>
+                      <field var='Created At'>
+                        <value>2020-09-23 00:36:20.363444</value>
                       </field>
                     </x>
                   </item>
@@ -179,6 +185,9 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
                   </field>
                   <field var='Description'>
                     <value>Pennsylvania University</value>
+                  </field>
+                  <field var='Created At'>
+                    <value>2020-09-23 00:36:20.363444</value>
                   </field>
                 </x>
               </item>

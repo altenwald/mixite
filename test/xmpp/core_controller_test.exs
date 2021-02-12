@@ -22,6 +22,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           <destroy channel='be89d464-87d1-4351-bdff-a2cdd7bdb975' xmlns='urn:xmpp:mix:core:1'/>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "not found" do
@@ -48,6 +50,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "forbidden" do
@@ -74,6 +78,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
   end
 
@@ -96,6 +102,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           <create channel='fa7c9b6a-d5c2-45cb-b807-258116df6548' xmlns='urn:xmpp:mix:core:1'/>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "named channel incorrectly" do
@@ -122,6 +130,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "ad-hoc channel correctly" do
@@ -142,6 +152,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           <create channel='uuid' xmlns='urn:xmpp:mix:core:1'/>
         </iq>
       ])
+
+      refute_receive _, 200
     end
   end
 
@@ -172,6 +184,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </update-subscription>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "incorrectly" do
@@ -208,6 +222,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
   end
 
@@ -234,6 +250,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </setnick>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "no changes" do
@@ -258,6 +276,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </setnick>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "conflict" do
@@ -288,6 +308,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "unknown error" do
@@ -318,6 +340,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "forbidden" do
@@ -348,6 +372,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
   end
 
@@ -410,6 +436,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
         end
 
       assert_all_stanza_receive(stanzas)
+
+      refute_receive _, 200
     end
 
     test "incorrectly to no-channel" do
@@ -448,6 +476,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "incorrectly bad request" do
@@ -486,6 +516,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "incorrectly using unknown query tag" do
@@ -524,6 +556,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "incorrectly more than one child" do
@@ -576,6 +610,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
   end
 
@@ -622,6 +658,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
         end
 
       assert_all_stanza_receive(stanzas)
+
+      refute_receive _, 200
     end
   end
 end

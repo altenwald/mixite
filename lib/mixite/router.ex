@@ -14,6 +14,7 @@ defmodule Mixite.Router do
     get("disco#items", Mixite.Xmpp.DiscoveryController, :items)
     get("disco#info", Mixite.Xmpp.DiscoveryController, :info)
     get("pubsub", Mixite.Xmpp.PubsubController, :get)
+    set("pubsub", Mixite.Xmpp.PubsubController, :set)
   end
 
   iq "urn:xmpp:mix:core" do

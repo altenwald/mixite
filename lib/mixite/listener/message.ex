@@ -2,7 +2,7 @@ defmodule Mixite.Listener.Message do
   use GenStage
 
   alias Exampple.Xml.Xmlel
-  alias Mixite.{Channel, Participant}
+  alias Mixite.{Broadcast, Channel, Participant}
 
   @producer Mixite.EventManager
 
@@ -30,7 +30,7 @@ defmodule Mixite.Listener.Message do
         ]
       })
 
-    Channel.send_broadcast(channel, [payload], from_jid, nil)
+    Broadcast.send(channel, [payload], from_jid, nil)
     {:noreply, [], state}
   end
 
@@ -52,7 +52,7 @@ defmodule Mixite.Listener.Message do
       })
 
     channel = %Channel{participants: [%Participant{jid: user_jid} | channel.participants]}
-    Channel.send_broadcast(channel, [payload], from_jid, nil)
+    Broadcast.send(channel, [payload], from_jid, nil)
     {:noreply, [], state}
   end
 

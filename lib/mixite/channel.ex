@@ -10,7 +10,7 @@ defmodule Mixite.Channel do
       end
 
       @impl Channel
-      def update(_channel, _user_id, _add_nodes, _rem_nodes) do
+      def update_nodes(_channel, _user_id, _add_nodes, _rem_nodes) do
         {:error, :not_implemented}
       end
 
@@ -35,6 +35,11 @@ defmodule Mixite.Channel do
       end
 
       @impl Channel
+      def update(_channel, _params, _ns) do
+        {:error, :not_implemented}
+      end
+
+      @impl Channel
       def destroy(_channel, _user_jid) do
         {:error, :not_implemented}
       end
@@ -45,28 +50,33 @@ defmodule Mixite.Channel do
       end
 
       @impl Channel
-      def process_node(_channel_id, _user_jid, _node) do
-        :ignore
+      def valid_nodes() do
+        ~w[
+          config
+          info
+          messages
+          participants
+          presence
+        ]
       end
 
       defoverridable join: 4,
-                     update: 4,
+                     update_nodes: 4,
                      leave: 2,
                      set_nick: 3,
                      store_message: 2,
                      create: 2,
+                     update: 3,
                      destroy: 2,
                      config_params: 1,
-                     process_node: 3
+                     valid_nodes: 0
     end
   end
 
   require Logger
 
-  alias Exampple.Component
   alias Exampple.Xml.Xmlel
-  alias Exampple.Xmpp.Stanza
-  alias Mixite.{Channel, EventManager, Participant}
+  alias Mixite.{Channel, Participant}
 
   @type mix_node() :: :presence | :participants | :messages | :config | :info
 
@@ -107,15 +117,15 @@ defmodule Mixite.Channel do
             }
   @callback join(t(), user_jid(), nick(), [nodes()]) ::
               {:ok, {Participant.t(), [nodes()]}} | {:error, Atom.t()}
-  @callback update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) ::
+  @callback update_nodes(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) ::
               {:ok, {t(), add :: [nodes()], rem :: [nodes()]}} | {:error, Atom.t()}
   @callback leave(t(), user_jid()) :: :ok | {:error, Atom.t()}
   @callback set_nick(t(), user_jid(), nick()) :: :ok | {:error, Atom.t()}
   @callback store_message(t(), Xmlel.t()) :: {:ok, String.t() | nil} | {:error, Atom.t()}
   @callback create(id(), user_jid()) :: {:ok, t()} | {:error, Atom.t()}
+  @callback update(t(), Map.t(), nodes()) :: {:ok, t()} | {:error, Atom.t()}
   @callback destroy(t(), user_jid()) :: :ok | {:error, Atom.t()}
-  @callback process_node(id(), user_jid(), nodes()) ::
-              :ignore | {:error, {String.t(), String.t(), String.t()}} | Xmlel.t() | [Xmlel.t()]
+  @callback valid_nodes() :: [nodes()]
 
   defstruct id: "",
             name: "",
@@ -127,16 +137,6 @@ defmodule Mixite.Channel do
             participants: [],
             updated_at: NaiveDateTime.utc_now(),
             inserted_at: NaiveDateTime.utc_now()
-
-  def valid_nodes() do
-    ~w[
-      config
-      info
-      messages
-      participants
-      presence
-    ]
-  end
 
   @doc """
   Get the backend implementation for Mixite.
@@ -322,6 +322,31 @@ defmodule Mixite.Channel do
   end
 
   @doc """
+  Let us know if the user can modify the information for the channel.
+
+  Examples:
+      iex> p1 = "user1@example.com"
+      iex> p2 = "user2@example.com"
+      iex> p3 = "user3@example.com"
+      iex> admins = [p1, p2, p3]
+      iex> %Mixite.Channel{administrators: admins}
+      iex> |> Mixite.Channel.can_modify?("user3@example.com")
+      true
+
+      iex> p1 = "user1@example.com"
+      iex> p2 = "user2@example.com"
+      iex> p3 = "user3@example.com"
+      iex> admins = [p1, p2, p3]
+      iex> %Mixite.Channel{administrators: admins}
+      iex> |> Mixite.Channel.can_modify?("user4@example.com")
+      false
+  """
+  @spec can_modify?(t(), user_jid()) :: boolean()
+  def can_modify?(channel, jid) do
+    is_administrator_or_owner?(channel, jid)
+  end
+
+  @doc """
   Get a participant from a channel if it exists.
 
   Examples:
@@ -391,9 +416,9 @@ defmodule Mixite.Channel do
     backend().join(channel, user_jid, nick, nodes)
   end
 
-  @spec update(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) ::
+  @spec update_nodes(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) ::
           {:ok, {t(), add :: [nodes()], rem :: [nodes()]}} | {:error, Atom.t()}
-  def update(channel, user_jid, add_nodes, rem_nodes) do
+  def update_nodes(channel, user_jid, add_nodes, rem_nodes) do
     add_nodes = (add_nodes -- add_nodes -- valid_nodes()) -- channel.nodes
     rem_nodes = rem_nodes -- rem_nodes -- valid_nodes()
     rem_nodes = rem_nodes -- rem_nodes -- channel.nodes
@@ -401,7 +426,7 @@ defmodule Mixite.Channel do
     Logger.debug("remove nodes: #{inspect(rem_nodes)}")
     Logger.debug("add nodes: #{inspect(add_nodes)}")
 
-    case backend().update(channel, user_jid, add_nodes, rem_nodes) do
+    case backend().update_nodes(channel, user_jid, add_nodes, rem_nodes) do
       {:error, _} = error -> error
       {:ok, channel} -> {:ok, {channel, add_nodes, rem_nodes}}
     end
@@ -427,117 +452,18 @@ defmodule Mixite.Channel do
     backend().create(id, user_jid)
   end
 
+  @spec update(t(), Map.t(), nodes()) :: {:ok, t()} | {:error, Atom.t()}
+  def update(channel, params, ns_node) do
+    backend().update(channel, params, ns_node)
+  end
+
   @spec destroy(t(), user_jid()) :: :ok | {:error, Atom.t()}
   def destroy(channel, user_jid) do
     backend().destroy(channel, user_jid)
   end
 
-  @spec process_node(id(), user_jid(), nodes()) ::
-          :ignore | {:error, {String.t(), String.t(), String.t()}} | Xmlel.t() | [Xmlel.t()]
-  def process_node(id, user_jid, nodes) do
-    backend().process_node(id, user_jid, nodes)
-  end
-
-  def send_broadcast(channel, payload, from_jid, type \\ "groupchat") do
-    EventManager.notify({:broadcast, from_jid, channel, payload})
-
-    message_id = Channel.gen_uuid()
-
-    channel.participants
-    |> Enum.each(fn %Participant{jid: jid} ->
-      payload
-      |> Stanza.message(from_jid, message_id, jid, type)
-      |> Component.send()
-    end)
-  end
-
-  defp field(name, type \\ nil, value)
-  defp field(_name, _type, nil), do: []
-  defp field(_name, _type, []), do: []
-
-  defp field(name, type, value) do
-    children =
-      if is_list(value) do
-        for v <- value, do: %Xmlel{name: "value", children: [v]}
-      else
-        [%Xmlel{name: "value", children: [value]}]
-      end
-
-    attrs =
-      if type do
-        %{"var" => name, "type" => type}
-      else
-        %{"var" => name}
-      end
-
-    [%Xmlel{name: "field", attrs: attrs, children: children}]
-  end
-
-  def render(channel, "urn:xmpp:mix:nodes:config") do
-    %Xmlel{
-      name: "item",
-      attrs: %{"id" => to_string(channel.updated_at)},
-      children: [
-        %Xmlel{
-          name: "x",
-          attrs: %{"xmlns" => "jabber:x:data", "type" => "result"},
-          children:
-            field("FORM_TYPE", "hidden", "urn:xmpp:mix:admin:0") ++
-              field("Owner", channel.owners) ++
-              field("Administrator", channel.administrators) ++
-              Enum.map(Channel.config_params(channel), fn
-                {{key, type}, value} -> hd(field(key, type, value))
-                {key, value} -> hd(field(key, value))
-              end)
-        }
-      ]
-    }
-  end
-
-  def render(channel, "urn:xmpp:mix:nodes:info") do
-    %Xmlel{
-      name: "item",
-      attrs: %{"id" => to_string(channel.updated_at)},
-      children: [
-        %Xmlel{
-          name: "x",
-          attrs: %{"xmlns" => "jabber:x:data", "type" => "result"},
-          children:
-            field("FORM_TYPE", "hidden", "urn:xmpp:mix:core:1") ++
-              field("Name", channel.name) ++
-              field("Description", channel.description) ++
-              field("Contact", channel.contact)
-        }
-      ]
-    }
-  end
-
-  def render(channel, "urn:xmpp:mix:nodes:participants") do
-    for participant <- channel.participants do
-      %Xmlel{
-        name: "item",
-        attrs: %{"id" => participant.id},
-        children: [
-          %Xmlel{
-            name: "participant",
-            attrs: %{"xmlns" => "urn:xmpp:mix:core:1"},
-            children: [
-              %Xmlel{name: "nick", children: [participant.nick]},
-              %Xmlel{name: "jid", children: [participant.jid]}
-            ]
-          }
-        ]
-      }
-    end
-  end
-
-  def render(channel, "urn:xmpp:mix:nodes:allowed") do
-    for participant <- channel.participants do
-      %Xmlel{
-        name: "item",
-        attrs: %{"id" => participant.jid}
-      }
-    end
+  def valid_nodes() do
+    backend().valid_nodes()
   end
 
   defimpl String.Chars, for: __MODULE__ do

@@ -152,6 +152,8 @@ defmodule Mixite.Xmpp.MessageControllerTest do
         end
 
       assert_all_stanza_receive(stanzas)
+
+      refute_receive _, 200
     end
 
     test "correctly without storage" do
@@ -187,6 +189,8 @@ defmodule Mixite.Xmpp.MessageControllerTest do
         end
 
       assert_all_stanza_receive(stanzas)
+
+      refute_receive _, 200
     end
 
     test "correctly with more complete payload" do
@@ -229,6 +233,8 @@ defmodule Mixite.Xmpp.MessageControllerTest do
         end
 
       assert_all_stanza_receive(stanzas)
+
+      refute_receive _, 200
     end
   end
 end

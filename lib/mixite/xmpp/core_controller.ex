@@ -147,7 +147,7 @@ defmodule Mixite.Xmpp.CoreController do
       nodes_rem =
         for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["unsubscribe"], do: node
 
-      case Channel.update(channel, user_jid, nodes_add, nodes_rem) do
+      case Channel.update_nodes(channel, user_jid, nodes_add, nodes_rem) do
         {:ok, {_channel, add_nodes, rem_nodes}} ->
           from_jid = Jid.to_bare(conn.from_jid)
           add_nodes = for node <- add_nodes, do: subscribe(node)

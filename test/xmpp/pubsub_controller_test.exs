@@ -3,7 +3,153 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
 
   import Exampple.Xml.Xmlel, only: [sigil_x: 2]
 
-  describe "pubsub: " do
+  describe "pubsub set: " do
+    test "nodes:info set for a channel" do
+      component_received(~x[
+        <iq from='4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com/UUID-c8y/1573'
+            id='111'
+            to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            type='set'>
+          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+            <items node='urn:xmpp:mix:nodes:info'>
+              <item>
+                <x xmlns='jabber:x:data' type='submit'>
+                  <field var='FORM_TYPE' type='hidden'>
+                    <value>urn:xmpp:mix:core:1</value>
+                  </field>
+                  <field var='Name'>
+                    <value>berkeley</value>
+                  </field>
+                  <field var='Description'>
+                    <value>Berkeley University</value>
+                  </field>
+                </x>
+              </item>
+            </items>
+          </pubsub>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            id='111'
+            to='4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com/UUID-c8y/1573'
+            type='result'>
+          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+            <items node='urn:xmpp:mix:nodes:info'>
+              <item id='2020-09-23 00:36:20.363444'>
+                <x xmlns='jabber:x:data' type='result'>
+                  <field var='FORM_TYPE' type='hidden'>
+                    <value>urn:xmpp:mix:core:1</value>
+                  </field>
+                  <field var='Name'>
+                    <value>berkeley</value>
+                  </field>
+                  <field var='Description'>
+                    <value>Berkeley University</value>
+                  </field>
+                </x>
+              </item>
+            </items>
+          </pubsub>
+        </iq>
+      ])
+
+      channel = Mixite.Channel.get("be89d464-87d1-4351-bdff-a2cdd7bdb975")
+
+      assert_all_stanza_receive(
+        for participant <- channel.participants do
+          ~x[
+            <message from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+                     id='uuid'
+                     to='#{participant.jid}'>
+              <event xmlns='http://jabber.org/protocol/pubsub#event'>
+                <items node='urn:xmpp:mix:nodes:info'>
+                  <item id='2020-09-23 00:36:20.363444'>
+                    <x xmlns='jabber:x:data' type='result'>
+                      <field var='FORM_TYPE' type='hidden'>
+                        <value>urn:xmpp:mix:core:1</value>
+                      </field>
+                      <field var='Name'>
+                        <value>berkeley</value>
+                      </field>
+                      <field var='Description'>
+                        <value>Berkeley University</value>
+                      </field>
+                    </x>
+                  </item>
+                </items>
+              </event>
+            </message>
+          ]
+        end
+      )
+
+      refute_receive _, 200
+    end
+
+    test "nodes:info set for a channel forbidden" do
+      component_received(~x[
+        <iq from='c3b10914-905d-4920-a5cd-146a0061e478@example.com/UUID-c8y/1573'
+            id='111'
+            to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            type='set'>
+          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+            <items node='urn:xmpp:mix:nodes:info'>
+              <item>
+                <x xmlns='jabber:x:data' type='submit'>
+                  <field var='FORM_TYPE' type='hidden'>
+                    <value>urn:xmpp:mix:core:1</value>
+                  </field>
+                  <field var='Name'>
+                    <value>berkeley</value>
+                  </field>
+                  <field var='Description'>
+                    <value>Berkeley University</value>
+                  </field>
+                </x>
+              </item>
+            </items>
+          </pubsub>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq to='c3b10914-905d-4920-a5cd-146a0061e478@example.com/UUID-c8y/1573'
+            id='111'
+            from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            type='error'>
+          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+            <items node='urn:xmpp:mix:nodes:info'>
+              <item>
+                <x xmlns='jabber:x:data' type='submit'>
+                  <field var='FORM_TYPE' type='hidden'>
+                    <value>urn:xmpp:mix:core:1</value>
+                  </field>
+                  <field var='Name'>
+                    <value>berkeley</value>
+                  </field>
+                  <field var='Description'>
+                    <value>Berkeley University</value>
+                  </field>
+                </x>
+              </item>
+            </items>
+          </pubsub>
+          <error type='auth'>
+            <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              forbidden access to channel
+            </text>
+          </error>
+        </iq>
+      ])
+
+      refute_receive _, 200
+    end
+  end
+
+  describe "pubsub get: " do
     test "nodes:info from a channel" do
       component_received(~x[
         <iq from='c3b10914-905d-4920-a5cd-146a0061e478@example.com/UUID-c8y/1573'
@@ -40,6 +186,8 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
           </pubsub>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "nodes:info from a non-user" do
@@ -70,6 +218,8 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "nodes:info channel not found" do
@@ -100,6 +250,8 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "nodes:config from a channel" do
@@ -144,6 +296,8 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
           </pubsub>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "nodes:config from a channel with administrators" do
@@ -191,6 +345,8 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
           </pubsub>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "nodes:config from a non-participant" do
@@ -221,6 +377,8 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "nodes:participants from a channel" do
@@ -258,6 +416,8 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
           </pubsub>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "custom node from a channel" do
@@ -284,6 +444,8 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
           </pubsub>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "custom node from a channel with multiple items" do
@@ -312,6 +474,8 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
           </pubsub>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "custom node generating error" do
@@ -342,6 +506,8 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "node not defined" do
@@ -372,6 +538,8 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
   end
 end

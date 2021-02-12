@@ -24,6 +24,8 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
           </query>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "disco#info from a channel" do
@@ -48,6 +50,8 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
           </query>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "disco#info from a non-existent channel" do
@@ -76,6 +80,8 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "disco#info from a not belonging channel" do
@@ -101,6 +107,8 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "disco#items general" do
@@ -120,6 +128,8 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
           </query>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "disco#items from a channel" do
@@ -151,6 +161,8 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
           </query>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "disco#items from a non-existent channel" do
@@ -179,6 +191,8 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
 
     test "disco#items from a not belonging channel" do
@@ -204,6 +218,8 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
           </error>
         </iq>
       ])
+
+      refute_receive _, 200
     end
   end
 end

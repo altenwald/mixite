@@ -172,15 +172,15 @@ defmodule Mixite.DummyChannel do
     {:ok, {participant, intersect_nodes}}
   end
 
-  def update(_channel, "c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com", _add_nodes, _rem_nodes) do
+  def update_nodes(_channel, "c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com", _add_nodes, _rem_nodes) do
     {:error, :unknown}
   end
 
-  def update(_channel, "missing@example.com", _add_nodes, _rem_nodes) do
+  def update_nodes(_channel, "missing@example.com", _add_nodes, _rem_nodes) do
     {:error, :not_implemented}
   end
 
-  def update(%Channel{nodes: nodes}, _user_id, add_nodes, rem_nodes) do
+  def update_nodes(%Channel{nodes: nodes}, _user_id, add_nodes, rem_nodes) do
     nodes = add_nodes ++ (nodes -- rem_nodes)
     {:ok, %Channel{nodes: nodes}}
   end
@@ -229,32 +229,24 @@ defmodule Mixite.DummyChannel do
     {:ok, %Channel{id: id, owners: [user_jid]}}
   end
 
+  def update(channel, params, "urn:xmpp:mix:nodes:info") do
+    {:ok,
+      %Channel{channel |
+        name: params["name"] || channel.name,
+        description: params["description"] || channel.description
+      }
+    }
+  end
+
+  def update(_channel, _params, _node) do
+    {:error, :invalid}
+  end
+
   def destroy(%Channel{owners: owners}, user_jid) do
     if user_jid in owners do
       :ok
     else
       {:error, :forbidden}
     end
-  end
-
-  @impl Channel
-  def process_node(_channel_id, _user_jid, "urn:xmpp:mixite:0") do
-    %Xmlel{name: "mixite", children: ["Hello world!"]}
-  end
-
-  def process_node(_channel_id, _user_jid, "urn:xmpp:mixite:1") do
-    [
-      %Xmlel{name: "mixite", children: ["Hello world!"]},
-      %Xmlel{name: "mixite", children: ["Hola mundo!"]},
-      %Xmlel{name: "mixite", children: ["Ciao mondo!"]}
-    ]
-  end
-
-  def process_node(_channel_id, _user_jid, "urn:xmpp:mixite:error:0") do
-    {:error, {"feature-not-implemented", "en", "mixite error!"}}
-  end
-
-  def process_node(_channel_id, _user_id, _nodes) do
-    :ignore
   end
 end

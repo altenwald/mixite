@@ -79,6 +79,11 @@ defmodule Mixite.DummyChannel do
           id: "0d26525e-f3cc-462c-94d1-61a5beafb033",
           nick: "john-von-neumann",
           jid: "c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com"
+        },
+        %Participant{
+          id: "2365bf25-a61b-4ca2-9fb3-3bee3bb00081",
+          nick: "alan-turing",
+          jid: "1a2d0b9b-9d10-4e0b-b878-9f8ab581a31f@example.com"
         }
       ],
       updated_at: ~N[2020-10-09 00:45:55.363444],
@@ -160,7 +165,7 @@ defmodule Mixite.DummyChannel do
     }
   end
 
-  def join(_channel, "fail@example.com", _nick, _nodes) do
+  def join(_channel, "forbid@example.com", _nick, _nodes) do
     {:error, :forbidden}
   end
 
@@ -182,7 +187,7 @@ defmodule Mixite.DummyChannel do
     {:error, :unknown}
   end
 
-  def update_nodes(_channel, "missing@example.com", _add_nodes, _rem_nodes) do
+  def update_nodes(_channel, "1a2d0b9b-9d10-4e0b-b878-9f8ab581a31f@example.com", _add_nodes, _rem_nodes) do
     {:error, :not_implemented}
   end
 
@@ -191,13 +196,13 @@ defmodule Mixite.DummyChannel do
     {:ok, %Channel{nodes: nodes}}
   end
 
+  def leave(_channel, "2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com") do
+    {:error, :noimpl}
+  end
+
   def leave(%Channel{} = channel, user_jid) do
     if Channel.is_participant?(channel, user_jid) do
-      if channel.name == "error" do
-        {:error, :noimpl}
-      else
-        :ok
-      end
+      :ok
     else
       {:error, :notfound}
     end

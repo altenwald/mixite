@@ -225,6 +225,82 @@ defmodule Mixite.Xmpp.CoreControllerTest do
 
       refute_receive _, 200
     end
+
+    test "incorrectly (forbidden)" do
+      component_received(~x[
+        <iq type='set'
+            to='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            from='2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic'
+            id='44'>
+          <update-subscription xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <unsubscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <unsubscribe node='urn:xmpp:mix:nodes:info'/>
+          </update-subscription>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            to='2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic'
+            id='44'>
+          <update-subscription xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <unsubscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <unsubscribe node='urn:xmpp:mix:nodes:info'/>
+          </update-subscription>
+          <error type='auth'>
+            <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              forbidden access to channel
+            </text>
+          </error>
+        </iq>
+      ])
+
+      refute_receive _, 200
+    end
+
+    test "incorrectly (not implemented?)" do
+      component_received(~x[
+        <iq type='set'
+            to='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            from='1a2d0b9b-9d10-4e0b-b878-9f8ab581a31f@example.com/hectic'
+            id='44'>
+          <update-subscription xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <unsubscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <unsubscribe node='urn:xmpp:mix:nodes:info'/>
+          </update-subscription>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            to='1a2d0b9b-9d10-4e0b-b878-9f8ab581a31f@example.com/hectic'
+            id='44'>
+          <update-subscription xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <unsubscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <unsubscribe node='urn:xmpp:mix:nodes:info'/>
+          </update-subscription>
+          <error type='cancel'>
+            <feature-not-implemented xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              update is not supported
+            </text>
+          </error>
+        </iq>
+      ])
+
+      refute_receive _, 200
+    end
   end
 
   describe "set nick" do
@@ -250,6 +326,30 @@ defmodule Mixite.Xmpp.CoreControllerTest do
           </setnick>
         </iq>
       ])
+
+      channel = Mixite.Channel.get("6535bb5c-732f-4a3b-8329-3923aec636a5")
+      from_jid = "8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com"
+
+      assert_all_stanza_receive(
+        for participant <- Enum.reject(channel.participants, & &1.jid == from_jid) do
+          ~x[
+            <message from='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+                     to='#{participant.jid}'
+                     id='uuid'>
+              <event xmlns='http://jabber.org/protocol/pubsub#event'>
+                <items node='urn:xmpp:mix:nodes:participants'>
+                  <item id='07f3022d-cb01-4bd8-8333-0a398be4ee8f'>
+                    <participant xmlns='urn:xmpp:mix:core:1'>
+                      <nick>ENIAC</nick>
+                      <jid>8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com</jid>
+                    </participant>
+                  </item>
+                </items>
+              </event>
+            </message>
+          ]
+        end
+      )
 
       refute_receive _, 200
     end
@@ -410,9 +510,10 @@ defmodule Mixite.Xmpp.CoreControllerTest do
       ])
 
       to_jids = [
-        "7b62547e-704c-4961-8e21-9248e12c427d@example.com",
+        # "7b62547e-704c-4961-8e21-9248e12c427d@example.com",
         "8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com",
-        "c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com"
+        "c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com",
+        "1a2d0b9b-9d10-4e0b-b878-9f8ab581a31f@example.com"
       ]
 
       stanzas =
@@ -425,8 +526,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
               <items node="urn:xmpp:mix:nodes:participants">
                 <item id="92cd9729-7755-4d41-a09b-7105c005aae2">
                   <participant xmlns="urn:xmpp:mix:core:1">
-                    <jid>7b62547e-704c-4961-8e21-9248e12c427d@example.com</jid>
                     <nick>third witch</nick>
+                    <jid>7b62547e-704c-4961-8e21-9248e12c427d@example.com</jid>
                   </participant>
                 </item>
               </items>
@@ -613,6 +714,46 @@ defmodule Mixite.Xmpp.CoreControllerTest do
 
       refute_receive _, 200
     end
+
+    test "incorrectly forbidden" do
+      component_received(~x[
+        <iq type='set'
+            to='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            from='forbid@example.com/hectic'
+            id='77'>
+          <join xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <subscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <subscribe node='urn:xmpp:mix:nodes:info'/>
+            <nick>99th witch</nick>
+          </join>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
+            to='forbid@example.com/hectic'
+            id='77'>
+          <join xmlns='urn:xmpp:mix:core:1'>
+            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <subscribe node='urn:xmpp:mix:nodes:presence'/>
+            <subscribe node='urn:xmpp:mix:nodes:participants'/>
+            <subscribe node='urn:xmpp:mix:nodes:info'/>
+            <nick>99th witch</nick>
+          </join>
+          <error type='auth'>
+            <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              forbidden access to channel
+            </text>
+          </error>
+        </iq>
+      ])
+
+      refute_receive _, 200
+    end
   end
 
   describe "leave" do
@@ -658,6 +799,90 @@ defmodule Mixite.Xmpp.CoreControllerTest do
         end
 
       assert_all_stanza_receive(stanzas)
+
+      refute_receive _, 200
+    end
+
+    test "incorrectly: not found" do
+      component_received(~x[
+        <iq type='set'
+            to='00000000-11e6-4a81-ab6a-afc598180b5a@mix.example.com'
+            from='e784345c-4bed-4ce0-9610-e6f57b9ac6f2@example.com/hectic'
+            id='50'>
+          <leave xmlns='urn:xmpp:mix:core:1'/>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='00000000-11e6-4a81-ab6a-afc598180b5a@mix.example.com'
+            to='e784345c-4bed-4ce0-9610-e6f57b9ac6f2@example.com/hectic'
+            id='50'>
+          <leave xmlns='urn:xmpp:mix:core:1'/>
+          <error type='cancel'>
+            <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              channel not found
+            </text>
+          </error>
+        </iq>
+      ])
+
+      refute_receive _, 200
+    end
+
+    test "incorrectly: forbidden" do
+      component_received(~x[
+        <iq type='set'
+            to='c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com'
+            from='00000000-4bed-4ce0-9610-e6f57b9ac6f2@example.com/hectic'
+            id='50'>
+          <leave xmlns='urn:xmpp:mix:core:1'/>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com'
+            to='00000000-4bed-4ce0-9610-e6f57b9ac6f2@example.com/hectic'
+            id='50'>
+          <leave xmlns='urn:xmpp:mix:core:1'/>
+          <error type='auth'>
+            <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              forbidden access to channel
+            </text>
+          </error>
+        </iq>
+      ])
+
+      refute_receive _, 200
+    end
+
+    test "incorrectly: not implemented?" do
+      component_received(~x[
+        <iq type='set'
+            to='c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com'
+            from='2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic'
+            id='50'>
+          <leave xmlns='urn:xmpp:mix:core:1'/>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq type='error'
+            from='c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com'
+            to='2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic'
+            id='50'>
+          <leave xmlns='urn:xmpp:mix:core:1'/>
+          <error type='cancel'>
+            <feature-not-implemented xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+              leave is not supported
+            </text>
+          </error>
+        </iq>
+      ])
 
       refute_receive _, 200
     end

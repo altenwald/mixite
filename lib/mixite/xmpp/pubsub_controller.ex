@@ -37,12 +37,12 @@ defmodule Mixite.Xmpp.PubsubController do
 
           {:ok, %Xmlel{} = item} ->
             conn
-            |> iq_resp([pubsub(node, [item])])
+            |> iq_resp([Pubsub.wrapper(:pubsub, node, [item])])
             |> send()
 
           {:ok, [%Xmlel{} | _] = items} ->
             conn
-            |> iq_resp([pubsub(node, items)])
+            |> iq_resp([Pubsub.wrapper(:pubsub, node, items)])
             |> send()
         end
 
@@ -51,12 +51,12 @@ defmodule Mixite.Xmpp.PubsubController do
 
       {:ok, %Xmlel{} = item} ->
         conn
-        |> iq_resp([pubsub(node, [item])])
+        |> iq_resp([Pubsub.wrapper(:pubsub, node, [item])])
         |> send()
 
       {:ok, [%Xmlel{} | _] = items} ->
         conn
-        |> iq_resp([pubsub(node, items)])
+        |> iq_resp([Pubsub.wrapper(:pubsub, node, items)])
         |> send()
     end
   end
@@ -80,17 +80,17 @@ defmodule Mixite.Xmpp.PubsubController do
 
           {:ok, channel, %Xmlel{} = item} ->
             conn
-            |> iq_resp([pubsub(node, [item])])
+            |> iq_resp([Pubsub.wrapper(:pubsub, node, [item])])
             |> send()
 
-            Broadcast.send(channel, [event(node, [item])], mix_jid, nil)
+            Broadcast.send(channel, [Pubsub.wrapper(:event, node, [item])], mix_jid)
 
           {:ok, channel, [%Xmlel{} | _] = items} ->
             conn
-            |> iq_resp([pubsub(node, items)])
+            |> iq_resp([Pubsub.wrapper(:pubsub, node, items)])
             |> send()
 
-            Broadcast.send(channel, [event(node, items)], mix_jid, nil)
+            Broadcast.send(channel, [Pubsub.wrapper(:event, node, items)], mix_jid)
         end
 
       {:error, error} ->
@@ -98,17 +98,17 @@ defmodule Mixite.Xmpp.PubsubController do
 
       {:ok, channel, %Xmlel{} = item} ->
         conn
-        |> iq_resp([pubsub(node, [item])])
+        |> iq_resp([Pubsub.wrapper(:pubsub, node, [item])])
         |> send()
 
-        Broadcast.send(channel, [event(node, [item])], mix_jid, nil)
+        Broadcast.send(channel, [Pubsub.wrapper(:event, node, [item])], mix_jid)
 
       {:ok, channel, [%Xmlel{} | _] = items} ->
         conn
-        |> iq_resp([pubsub(node, items)])
+        |> iq_resp([Pubsub.wrapper(:pubsub, node, items)])
         |> send()
 
-        Broadcast.send(channel, [event(node, items)], mix_jid, nil)
+        Broadcast.send(channel, [Pubsub.wrapper(:event, node, items)], mix_jid)
     end
   end
 
@@ -156,48 +156,6 @@ defmodule Mixite.Xmpp.PubsubController do
 
   def process_get_node(_conn, nodes) do
     {:error, {"feature-not-implemented", "en", "#{nodes} not implemented"}}
-  end
-
-  defp pubsub(node, items) do
-    %Xmlel{
-      name: "pubsub",
-      attrs: %{"xmlns" => "http://jabber.org/protocol/pubsub"},
-      children: [
-        %Xmlel{
-          name: "items",
-          attrs:
-            case node do
-              "urn:xmpp:mix:nodes:config" ->
-                %{"xmlns" => "urn:xmpp:mix:admin:0", "node" => node}
-
-              _ ->
-                %{"node" => node}
-            end,
-          children: items
-        }
-      ]
-    }
-  end
-
-  defp event(node, items) do
-    %Xmlel{
-      name: "event",
-      attrs: %{"xmlns" => "http://jabber.org/protocol/pubsub#event"},
-      children: [
-        %Xmlel{
-          name: "items",
-          attrs:
-            case node do
-              "urn:xmpp:mix:nodes:config" ->
-                %{"xmlns" => "urn:xmpp:mix:admin:0", "node" => node}
-
-              _ ->
-                %{"node" => node}
-            end,
-          children: items
-        }
-      ]
-    }
   end
 
   def process_set_node(%Conn{to_jid: %Jid{node: channel_id}} = conn, @ns_config, query)

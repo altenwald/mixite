@@ -3,7 +3,9 @@ defmodule Mixite.Broadcast do
   alias Exampple.Xmpp.Stanza
   alias Mixite.{Channel, EventManager, Participant}
 
-  def send(channel, payload, from_jid, type \\ "groupchat", ignore_jids \\ []) do
+  def send(channel, payload, from_jid, opts \\ []) do
+    ignore_jids = opts[:ignore_jids] || []
+    type = opts[:type]
     EventManager.notify({:broadcast, from_jid, channel, payload})
 
     message_id = Channel.gen_uuid()

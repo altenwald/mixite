@@ -17,7 +17,7 @@ defmodule Mixite.Xmpp.MessageController do
 
   defp send_broadcast(conn, channel, payload) do
     from_jid = Jid.to_bare(conn.to_jid)
-    Broadcast.send(channel, payload, from_jid)
+    Broadcast.send(channel, payload, from_jid, type: "groupchat")
   end
 
   def broadcast(%Conn{to_jid: %Jid{node: ""}} = conn, _query) do

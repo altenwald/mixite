@@ -3,6 +3,8 @@ defmodule Mixite.Pubsub do
   alias Mixite.Channel
 
   @ns_xdata "jabber:x:data"
+  @ns_pubsub "http://jabber.org/protocol/pubsub"
+  @ns_event "http://jabber.org/protocol/pubsub#event"
   @ns_admin "urn:xmpp:mix:admin:0"
   @ns_core "urn:xmpp:mix:core:1"
   @ns_config "urn:xmpp:mix:nodes:config"
@@ -100,7 +102,8 @@ defmodule Mixite.Pubsub do
     [%Xmlel{name: "field", attrs: attrs, children: children}]
   end
 
-  def render(channel, @ns_config) do
+  def render(channel, nodes, opts \\ [])
+  def render(channel, @ns_config, _opts) do
     %Xmlel{
       name: "item",
       attrs: %{"id" => to_string(channel.updated_at)},
@@ -121,7 +124,7 @@ defmodule Mixite.Pubsub do
     }
   end
 
-  def render(channel, @ns_info) do
+  def render(channel, @ns_info, _opts) do
     %Xmlel{
       name: "item",
       attrs: %{"id" => to_string(channel.updated_at)},
@@ -143,8 +146,9 @@ defmodule Mixite.Pubsub do
     }
   end
 
-  def render(channel, @ns_participants) do
-    for participant <- channel.participants do
+  def render(channel, @ns_participants, opts) do
+    only_jids = opts[:only_jids]
+    for participant <- channel.participants, is_nil(only_jids) or participant.jid in only_jids do
       %Xmlel{
         name: "item",
         attrs: %{"id" => participant.id},
@@ -162,8 +166,9 @@ defmodule Mixite.Pubsub do
     end
   end
 
-  def render(channel, @ns_allowed) do
-    for participant <- channel.participants do
+  def render(channel, @ns_allowed, opts) do
+    only_jids = opts[:only_jids]
+    for participant <- channel.participants, is_nil(only_jids) or participant.jid in only_jids do
       %Xmlel{
         name: "item",
         attrs: %{"id" => participant.jid}
@@ -212,5 +217,37 @@ defmodule Mixite.Pubsub do
 
   def process_config(error) do
     {:error, {"bad-request", "en", to_string(error)}}
+  end
+
+  def wrapper(:pubsub, node, items) do
+    Xmlel.new("pubsub", %{"xmlns" => @ns_pubsub}, [
+      Xmlel.new(
+        "items",
+        case node do
+          "urn:xmpp:mix:nodes:config" ->
+            %{"xmlns" => "urn:xmpp:mix:admin:0", "node" => node}
+
+          _ ->
+            %{"node" => node}
+        end,
+        items
+      )
+    ])
+  end
+
+  def wrapper(:event, node, items) do
+    Xmlel.new("event", %{"xmlns" => @ns_event}, [
+      Xmlel.new(
+        "items",
+        case node do
+          "urn:xmpp:mix:nodes:config" ->
+            %{"xmlns" => "urn:xmpp:mix:admin:0", "node" => node}
+
+          _ ->
+            %{"node" => node}
+        end,
+        items
+      )
+    ])
   end
 end

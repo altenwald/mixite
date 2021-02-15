@@ -86,11 +86,22 @@ defmodule Mixite.Xmpp.CoreController do
     end
   end
 
+  # TODO 7.1.4 - system could choose a nick for the user if it's empty
   defp set_nick(conn, [%Xmlel{children: [nick]}], channel) do
     user_jid = Jid.to_bare(conn.from_jid)
+    mix_jid = Jid.to_bare(conn.to_jid)
 
     if Channel.is_participant?(channel, user_jid) do
+      participant = Enum.find(channel.participants, & &1.jid == user_jid)
       case Channel.set_nick(channel, user_jid, nick) do
+        :ok when nick != participant.nick ->
+          conn
+          |> iq_resp()
+          |> send()
+
+          {participant, channel} = Channel.split(channel, user_jid)
+          EventManager.notify({:set_nick, nick, participant, mix_jid, user_jid, channel})
+
         :ok ->
           conn
           |> iq_resp()
@@ -113,20 +124,16 @@ defmodule Mixite.Xmpp.CoreController do
     user_jid = Jid.to_bare(conn.from_jid)
 
     if Channel.is_participant?(channel, user_jid) do
-      to_jid = to_string(conn.to_jid)
+      mix_jid = Jid.to_bare(conn.to_jid)
 
       case Channel.leave(channel, user_jid) do
         :ok ->
           {participant, channel} = Channel.split(channel, user_jid)
-          EventManager.notify({:leave, participant.id, to_jid, user_jid, channel})
+          EventManager.notify({:leave, participant.id, mix_jid, user_jid, channel})
 
           conn
           |> iq_resp()
           |> send()
-
-        {:error, :notfound} ->
-          Logger.error("user #{user_jid} tried leave #{to_jid} not found")
-          send_not_found(conn)
 
         {:error, _} = error ->
           Logger.error("leave feature error: #{inspect(error)}")
@@ -194,7 +201,7 @@ defmodule Mixite.Xmpp.CoreController do
 
       {:error, :forbidden} ->
         Logger.error("user #{user_jid} was not granted to join #{channel}")
-        send_feature_not_implemented(conn, "en", "join not implemented")
+        send_forbidden(conn)
 
       {:error, _} = error ->
         Logger.error("join failed: #{inspect(error)}")

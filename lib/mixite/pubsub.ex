@@ -106,7 +106,7 @@ defmodule Mixite.Pubsub do
   def render(channel, @ns_config, _opts) do
     %Xmlel{
       name: "item",
-      attrs: %{"id" => to_string(channel.updated_at)},
+      attrs: %{"id" => Exampple.Xmpp.Timestamp.to_utc_string(channel.updated_at)},
       children: [
         %Xmlel{
           name: "x",
@@ -127,7 +127,7 @@ defmodule Mixite.Pubsub do
   def render(channel, @ns_info, _opts) do
     %Xmlel{
       name: "item",
-      attrs: %{"id" => to_string(channel.updated_at)},
+      attrs: %{"id" => Exampple.Xmpp.Timestamp.to_utc_string(channel.updated_at)},
       children: [
         %Xmlel{
           name: "x",

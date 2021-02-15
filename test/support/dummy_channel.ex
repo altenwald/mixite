@@ -31,8 +31,8 @@ defmodule Mixite.DummyChannel do
           nodes: @nodes
         }
       ],
-      updated_at: ~N[2020-09-23 00:36:20.363444],
-      inserted_at: ~N[2020-09-23 00:36:20.363444]
+      updated_at: ~N[2020-09-23 00:36:20],
+      inserted_at: ~N[2020-09-23 00:36:20]
     },
     "c5f74c1b-11e6-4a81-ab6a-afc598180b5a" => %Channel{
       id: "c5f74c1b-11e6-4a81-ab6a-afc598180b5a",
@@ -60,8 +60,8 @@ defmodule Mixite.DummyChannel do
           nodes: @nodes
         }
       ],
-      updated_at: ~N[2020-09-23 00:36:20.363444],
-      inserted_at: ~N[2020-09-23 00:36:20.363444]
+      updated_at: ~N[2020-09-23 00:36:20],
+      inserted_at: ~N[2020-09-23 00:36:20]
     },
     "6535bb5c-732f-4a3b-8329-3923aec636a5" => %Channel{
       id: "6535bb5c-732f-4a3b-8329-3923aec636a5",
@@ -86,8 +86,8 @@ defmodule Mixite.DummyChannel do
           jid: "1a2d0b9b-9d10-4e0b-b878-9f8ab581a31f@example.com"
         }
       ],
-      updated_at: ~N[2020-10-09 00:45:55.363444],
-      inserted_at: ~N[2020-10-09 00:45:55.363444]
+      updated_at: ~N[2020-10-09 00:45:55],
+      inserted_at: ~N[2020-10-09 00:45:55]
     },
     "3cfd82c0-8453-4198-a706-dbec5692dc43" => %Channel{
       id: "3cfd82c0-8453-4198-a706-dbec5692dc43",
@@ -109,8 +109,8 @@ defmodule Mixite.DummyChannel do
           jid: "c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com"
         }
       ],
-      updated_at: ~N[2020-10-09 00:45:55.363444],
-      inserted_at: ~N[2020-10-09 00:45:55.363444]
+      updated_at: ~N[2020-10-09 00:45:55],
+      inserted_at: ~N[2020-10-09 00:45:55]
     },
     "28be3cc7-d605-40dd-8b5a-012b59e90c26" => %Channel{
       id: "28be3cc7-d605-40dd-8b5a-012b59e90c26",
@@ -131,8 +131,8 @@ defmodule Mixite.DummyChannel do
           jid: "85c3a29b-7aa8-488f-96a2-41440505f999@example.com"
         }
       ],
-      updated_at: ~N[2020-10-09 00:45:55.363444],
-      inserted_at: ~N[2020-10-09 00:45:55.363444]
+      updated_at: ~N[2020-10-09 00:45:55],
+      inserted_at: ~N[2020-10-09 00:45:55]
     }
   }
 
@@ -161,7 +161,7 @@ defmodule Mixite.DummyChannel do
 
   def info_params(channel) do
     %{
-      "Created At" => to_string(channel.inserted_at)
+      "Created At" => Exampple.Xmpp.Timestamp.to_utc_string(channel.inserted_at)
     }
   end
 

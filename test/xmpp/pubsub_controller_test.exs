@@ -40,7 +40,7 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
           <pubsub xmlns='http://jabber.org/protocol/pubsub'>
             <publish node='urn:xmpp:mix:nodes:info'>
               <items>
-                <item id='2020-09-23 00:36:20.363444' xmlns='urn:xmpp:mix:core:1'/>
+                <item id='2020-09-23T00:36:20Z' xmlns='urn:xmpp:mix:core:1'/>
               </items>
             </publish>
           </pubsub>
@@ -57,7 +57,7 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
                      to='#{participant.jid}'>
               <event xmlns='http://jabber.org/protocol/pubsub#event'>
                 <items node='urn:xmpp:mix:nodes:info'>
-                  <item id='2020-09-23 00:36:20.363444'>
+                  <item id='2020-09-23T00:36:20Z'>
                     <x xmlns='jabber:x:data' type='result'>
                       <field var='FORM_TYPE' type='hidden'>
                         <value>urn:xmpp:mix:core:1</value>
@@ -69,7 +69,7 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
                         <value>Berkeley University</value>
                       </field>
                       <field var='Created At'>
-                        <value>2020-09-23 00:36:20.363444</value>
+                        <value>2020-09-23T00:36:20Z</value>
                       </field>
                     </x>
                   </item>
@@ -168,7 +168,7 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             type='result'>
           <pubsub xmlns='http://jabber.org/protocol/pubsub'>
             <items node='urn:xmpp:mix:nodes:info'>
-              <item id='2020-09-23 00:36:20.363444'>
+              <item id='2020-09-23T00:36:20Z'>
                 <x xmlns='jabber:x:data' type='result'>
                   <field var='FORM_TYPE' type='hidden'>
                     <value>urn:xmpp:mix:core:1</value>
@@ -180,7 +180,7 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
                     <value>Pennsylvania University</value>
                   </field>
                   <field var='Created At'>
-                    <value>2020-09-23 00:36:20.363444</value>
+                    <value>2020-09-23T00:36:20Z</value>
                   </field>
                 </x>
               </item>
@@ -275,7 +275,7 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             type='result'>
           <pubsub xmlns='http://jabber.org/protocol/pubsub'>
             <items xmlns='urn:xmpp:mix:admin:0' node='urn:xmpp:mix:nodes:config'>
-              <item id='2020-09-23 00:36:20.363444'>
+              <item id='2020-09-23T00:36:20Z'>
                 <x xmlns='jabber:x:data' type='result'>
                   <field var='FORM_TYPE' type='hidden'>
                     <value>urn:xmpp:mix:admin:0</value>
@@ -321,7 +321,7 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             type='result'>
           <pubsub xmlns='http://jabber.org/protocol/pubsub'>
             <items xmlns='urn:xmpp:mix:admin:0' node='urn:xmpp:mix:nodes:config'>
-              <item id='2020-10-09 00:45:55.363444'>
+              <item id='2020-10-09T00:45:55Z'>
                 <x xmlns='jabber:x:data' type='result'>
                   <field var='FORM_TYPE' type='hidden'>
                     <value>urn:xmpp:mix:admin:0</value>

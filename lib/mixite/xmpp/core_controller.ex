@@ -92,7 +92,8 @@ defmodule Mixite.Xmpp.CoreController do
     mix_jid = Jid.to_bare(conn.to_jid)
 
     if Channel.is_participant?(channel, user_jid) do
-      participant = Enum.find(channel.participants, & &1.jid == user_jid)
+      participant = Enum.find(channel.participants, &(&1.jid == user_jid))
+
       case Channel.set_nick(channel, user_jid, nick) do
         :ok when nick != participant.nick ->
           conn

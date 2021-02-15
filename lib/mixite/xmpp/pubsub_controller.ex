@@ -80,14 +80,14 @@ defmodule Mixite.Xmpp.PubsubController do
 
           {:ok, channel, %Xmlel{} = item} ->
             conn
-            |> iq_resp([Pubsub.wrapper(:pubsub, node, [item])])
+            |> iq_resp([Pubsub.wrapper(:result, node, [item])])
             |> send()
 
             Broadcast.send(channel, [Pubsub.wrapper(:event, node, [item])], mix_jid)
 
           {:ok, channel, [%Xmlel{} | _] = items} ->
             conn
-            |> iq_resp([Pubsub.wrapper(:pubsub, node, items)])
+            |> iq_resp([Pubsub.wrapper(:result, node, items)])
             |> send()
 
             Broadcast.send(channel, [Pubsub.wrapper(:event, node, items)], mix_jid)
@@ -98,14 +98,14 @@ defmodule Mixite.Xmpp.PubsubController do
 
       {:ok, channel, %Xmlel{} = item} ->
         conn
-        |> iq_resp([Pubsub.wrapper(:pubsub, node, [item])])
+        |> iq_resp([Pubsub.wrapper(:result, node, [item])])
         |> send()
 
         Broadcast.send(channel, [Pubsub.wrapper(:event, node, [item])], mix_jid)
 
       {:ok, channel, [%Xmlel{} | _] = items} ->
         conn
-        |> iq_resp([Pubsub.wrapper(:pubsub, node, items)])
+        |> iq_resp([Pubsub.wrapper(:result, node, items)])
         |> send()
 
         Broadcast.send(channel, [Pubsub.wrapper(:event, node, items)], mix_jid)
@@ -174,8 +174,12 @@ defmodule Mixite.Xmpp.PubsubController do
           {:error, error}
       end
     else
-      nil -> nil
-      false -> :forbidden
+      nil ->
+        nil
+
+      false ->
+        :forbidden
+
       {:error, error} ->
         Logger.error("cannot update config channel: #{inspect(error)}")
         {:error, error}
@@ -193,13 +197,17 @@ defmodule Mixite.Xmpp.PubsubController do
         {:ok, channel} ->
           {:ok, channel, Pubsub.render(channel, @ns_info)}
 
-          {:error, error} ->
-            Logger.error("cannot update info channel: #{inspect(error)}")
-            {:error, {"internal-server-error", "en", "An error happened"}}
+        {:error, error} ->
+          Logger.error("cannot update info channel: #{inspect(error)}")
+          {:error, {"internal-server-error", "en", "An error happened"}}
       end
     else
-      nil -> nil
-      false -> :forbidden
+      nil ->
+        nil
+
+      false ->
+        :forbidden
+
       {:error, error} ->
         Logger.error("cannot update info channel: #{inspect(error)}")
         {:error, {"internal-server-error", "en", "An error happened"}}

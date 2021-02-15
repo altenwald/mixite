@@ -331,7 +331,7 @@ defmodule Mixite.Xmpp.CoreControllerTest do
       from_jid = "8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com"
 
       assert_all_stanza_receive(
-        for participant <- Enum.reject(channel.participants, & &1.jid == from_jid) do
+        for participant <- Enum.reject(channel.participants, &(&1.jid == from_jid)) do
           ~x[
             <message from='6535bb5c-732f-4a3b-8329-3923aec636a5@mix.example.com'
                      to='#{participant.jid}'

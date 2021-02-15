@@ -183,11 +183,21 @@ defmodule Mixite.DummyChannel do
     {:ok, {participant, intersect_nodes}}
   end
 
-  def update_nodes(_channel, "c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com", _add_nodes, _rem_nodes) do
+  def update_nodes(
+        _channel,
+        "c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com",
+        _add_nodes,
+        _rem_nodes
+      ) do
     {:error, :unknown}
   end
 
-  def update_nodes(_channel, "1a2d0b9b-9d10-4e0b-b878-9f8ab581a31f@example.com", _add_nodes, _rem_nodes) do
+  def update_nodes(
+        _channel,
+        "1a2d0b9b-9d10-4e0b-b878-9f8ab581a31f@example.com",
+        _add_nodes,
+        _rem_nodes
+      ) do
     {:error, :not_implemented}
   end
 
@@ -242,11 +252,11 @@ defmodule Mixite.DummyChannel do
 
   def update(channel, params, "urn:xmpp:mix:nodes:info") do
     {:ok,
-      %Channel{channel |
-        name: params["name"] || channel.name,
-        description: params["description"] || channel.description
-      }
-    }
+     %Channel{
+       channel
+       | name: params["name"] || channel.name,
+         description: params["description"] || channel.description
+     }}
   end
 
   def update(_channel, _params, _node) do

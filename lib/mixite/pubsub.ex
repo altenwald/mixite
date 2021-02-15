@@ -32,18 +32,17 @@ defmodule Mixite.Pubsub do
     end
   end
 
-
   @callback process_get_node(Channel.id(), Channel.user_jid(), Channel.nodes()) ::
-              :ignore |
-              {:error, {String.t(), String.t(), String.t()}} |
-              {:ok, Xmlel.t()} |
-              {:ok, [Xmlel.t()]}
+              :ignore
+              | {:error, {String.t(), String.t(), String.t()}}
+              | {:ok, Xmlel.t()}
+              | {:ok, [Xmlel.t()]}
 
   @callback process_set_node(Channel.id(), Channel.user_jid(), Channel.nodes(), Xmlel.t()) ::
-              :ignore |
-              {:error, {String.t(), String.t(), String.t()}} |
-              {:ok, Channel.t(), Xmlel.t()} |
-              {:ok, Channel.t(), [Xmlel.t()]}
+              :ignore
+              | {:error, {String.t(), String.t(), String.t()}}
+              | {:ok, Channel.t(), Xmlel.t()}
+              | {:ok, Channel.t(), [Xmlel.t()]}
 
   @doc """
   Get the backend implementation for Mixite.
@@ -63,19 +62,19 @@ defmodule Mixite.Pubsub do
   end
 
   @spec process_get_node(Channel.id(), Channel.user_jid(), Channel.nodes()) ::
-          :ignore |
-          {:error, {String.t(), String.t(), String.t()}} |
-          {:ok, Xmlel.t()} |
-          {:ok, [Xmlel.t()]}
+          :ignore
+          | {:error, {String.t(), String.t(), String.t()}}
+          | {:ok, Xmlel.t()}
+          | {:ok, [Xmlel.t()]}
   def process_get_node(id, user_jid, nodes) do
     backend().process_get_node(id, user_jid, nodes)
   end
 
   @spec process_set_node(Channel.id(), Channel.user_jid(), Channel.nodes(), Xmlel.t()) ::
-          :ignore |
-          {:error, {String.t(), String.t(), String.t()}} |
-          {:ok, Channel.t(), Xmlel.t()} |
-          {:ok, Channel.t(), [Xmlel.t()]}
+          :ignore
+          | {:error, {String.t(), String.t(), String.t()}}
+          | {:ok, Channel.t(), Xmlel.t()}
+          | {:ok, Channel.t(), [Xmlel.t()]}
   def process_set_node(id, user_jid, nodes, query) do
     backend().process_set_node(id, user_jid, nodes, query)
   end
@@ -103,6 +102,7 @@ defmodule Mixite.Pubsub do
   end
 
   def render(channel, nodes, opts \\ [])
+
   def render(channel, @ns_config, _opts) do
     %Xmlel{
       name: "item",
@@ -148,6 +148,7 @@ defmodule Mixite.Pubsub do
 
   def render(channel, @ns_participants, opts) do
     only_jids = opts[:only_jids]
+
     for participant <- channel.participants, is_nil(only_jids) or participant.jid in only_jids do
       %Xmlel{
         name: "item",
@@ -168,6 +169,7 @@ defmodule Mixite.Pubsub do
 
   def render(channel, @ns_allowed, opts) do
     only_jids = opts[:only_jids]
+
     for participant <- channel.participants, is_nil(only_jids) or participant.jid in only_jids do
       %Xmlel{
         name: "item",
@@ -183,9 +185,17 @@ defmodule Mixite.Pubsub do
   def get_value(%Xmlel{children: [value]}), do: value
 
   def process_info(%Xmlel{
-           name: "items",
-           children: [%Xmlel{name: "item", children: [%Xmlel{name: "x", children: fields}]}]
-         }) do
+        name: "publish",
+        attrs: %{"node" => @ns_info},
+        children: [
+          %Xmlel{
+            name: "items",
+            children: [
+              %Xmlel{name: "item", children: [%Xmlel{name: "x", children: fields}]}
+            ]
+          }
+        ]
+      }) do
     fields =
       fields
       |> Enum.map(fn %Xmlel{name: "field", attrs: %{"var" => varname}, children: [value]} ->
@@ -200,11 +210,18 @@ defmodule Mixite.Pubsub do
     {:error, {"bad-request", "en", to_string(error)}}
   end
 
-  def process_config(
-         %Xmlel{
-           name: "items",
-           children: [%Xmlel{name: "item", children: [%Xmlel{name: "x", children: fields}]}]
-         }) do
+  def process_config(%Xmlel{
+        name: "publish",
+        attrs: %{"node" => @ns_config},
+        children: [
+          %Xmlel{
+            name: "items",
+            children: [
+              %Xmlel{name: "item", children: [%Xmlel{name: "x", children: fields}]}
+            ]
+          }
+        ]
+      }) do
     fields =
       fields
       |> Enum.map(fn %Xmlel{name: "field", attrs: %{"var" => varname}, children: values} ->
@@ -232,6 +249,28 @@ defmodule Mixite.Pubsub do
         end,
         items
       )
+    ])
+  end
+
+  def wrapper(:result, node, items) do
+    Xmlel.new("pubsub", %{"xmlns" => @ns_pubsub}, [
+      Xmlel.new("publish", %{"node" => node}, [
+        Xmlel.new(
+          "items",
+          %{},
+          case node do
+            @ns_info ->
+              for %Xmlel{name: "item", attrs: %{"id" => id}} <- items do
+                %Xmlel{name: "item", attrs: %{"id" => id, "xmlns" => @ns_core}}
+              end
+
+            @ns_config ->
+              for %Xmlel{name: "item", attrs: %{"id" => id}} <- items do
+                %Xmlel{name: "item", attrs: %{"id" => id, "xmlns" => @ns_admin}}
+              end
+          end
+        )
+      ])
     ])
   end
 

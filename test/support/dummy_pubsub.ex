@@ -9,11 +9,12 @@ defmodule Mixite.DummyPubsub do
   end
 
   def process_get_node(_channel_id, _user_jid, "urn:xmpp:mixite:1") do
-    {:ok, [
-      %Xmlel{name: "mixite", children: ["Hello world!"]},
-      %Xmlel{name: "mixite", children: ["Hola mundo!"]},
-      %Xmlel{name: "mixite", children: ["Ciao mondo!"]}
-    ]}
+    {:ok,
+     [
+       %Xmlel{name: "mixite", children: ["Hello world!"]},
+       %Xmlel{name: "mixite", children: ["Hola mundo!"]},
+       %Xmlel{name: "mixite", children: ["Ciao mondo!"]}
+     ]}
   end
 
   def process_get_node(_channel_id, _user_jid, "urn:xmpp:mixite:error:0") do

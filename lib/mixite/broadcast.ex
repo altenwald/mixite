@@ -11,7 +11,7 @@ defmodule Mixite.Broadcast do
     message_id = Channel.gen_uuid()
 
     channel.participants
-    |> Enum.reject(& &1.jid in ignore_jids)
+    |> Enum.reject(&(&1.jid in ignore_jids))
     |> Enum.each(fn %Participant{jid: jid} ->
       payload
       |> Stanza.message(from_jid, message_id, jid, type)

@@ -10,7 +10,7 @@ defmodule Mixite.Channel do
       end
 
       @impl Channel
-      def update_nodes(_channel, _user_id, _add_nodes, _rem_nodes) do
+      def update_subscription(_channel, _user_id, _add_nodes, _rem_nodes) do
         {:error, :not_implemented}
       end
 
@@ -66,7 +66,7 @@ defmodule Mixite.Channel do
       end
 
       defoverridable join: 4,
-                     update_nodes: 4,
+                     update_subscription: 4,
                      leave: 2,
                      set_nick: 3,
                      store_message: 2,
@@ -126,7 +126,7 @@ defmodule Mixite.Channel do
             }
   @callback join(t(), user_jid(), nick(), [nodes()]) ::
               {:ok, {Participant.t(), [nodes()]}} | {:error, Atom.t()}
-  @callback update_nodes(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) ::
+  @callback update_subscription(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) ::
               {:ok, {t(), add :: [nodes()], rem :: [nodes()]}} | {:error, Atom.t()}
   @callback leave(t(), user_jid()) :: :ok | {:error, Atom.t()}
   @callback set_nick(t(), user_jid(), nick()) :: :ok | {:error, Atom.t()}
@@ -428,9 +428,9 @@ defmodule Mixite.Channel do
     backend().join(channel, user_jid, nick, nodes)
   end
 
-  @spec update_nodes(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) ::
+  @spec update_subscription(t(), user_jid(), add :: [nodes()], rem :: [nodes()]) ::
           {:ok, {t(), add :: [nodes()], rem :: [nodes()]}} | {:error, Atom.t()}
-  def update_nodes(channel, user_jid, add_nodes, rem_nodes) do
+  def update_subscription(channel, user_jid, add_nodes, rem_nodes) do
     add_nodes = (add_nodes -- add_nodes -- valid_nodes()) -- channel.nodes
     rem_nodes = rem_nodes -- rem_nodes -- valid_nodes()
     rem_nodes = rem_nodes -- rem_nodes -- channel.nodes
@@ -438,7 +438,7 @@ defmodule Mixite.Channel do
     Logger.debug("remove nodes: #{inspect(rem_nodes)}")
     Logger.debug("add nodes: #{inspect(add_nodes)}")
 
-    case backend().update_nodes(channel, user_jid, add_nodes, rem_nodes) do
+    case backend().update_subscription(channel, user_jid, add_nodes, rem_nodes) do
       {:error, _} = error -> error
       {:ok, channel} -> {:ok, {channel, add_nodes, rem_nodes}}
     end

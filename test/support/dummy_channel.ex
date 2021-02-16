@@ -183,7 +183,7 @@ defmodule Mixite.DummyChannel do
     {:ok, {participant, intersect_nodes}}
   end
 
-  def update_nodes(
+  def update_subscription(
         _channel,
         "c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com",
         _add_nodes,
@@ -192,7 +192,7 @@ defmodule Mixite.DummyChannel do
     {:error, :unknown}
   end
 
-  def update_nodes(
+  def update_subscription(
         _channel,
         "1a2d0b9b-9d10-4e0b-b878-9f8ab581a31f@example.com",
         _add_nodes,
@@ -201,7 +201,7 @@ defmodule Mixite.DummyChannel do
     {:error, :not_implemented}
   end
 
-  def update_nodes(%Channel{nodes: nodes}, _user_id, add_nodes, rem_nodes) do
+  def update_subscription(%Channel{nodes: nodes}, _user_id, add_nodes, rem_nodes) do
     nodes = add_nodes ++ (nodes -- rem_nodes)
     {:ok, %Channel{nodes: nodes}}
   end

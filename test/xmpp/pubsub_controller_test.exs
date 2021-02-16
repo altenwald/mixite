@@ -12,21 +12,19 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             type='set'>
           <pubsub xmlns='http://jabber.org/protocol/pubsub'>
             <publish node='urn:xmpp:mix:nodes:info'>
-              <items>
-                <item>
-                  <x xmlns='jabber:x:data' type='submit'>
-                    <field var='FORM_TYPE' type='hidden'>
-                      <value>urn:xmpp:mix:core:1</value>
-                    </field>
-                    <field var='Name'>
-                      <value>berkeley</value>
-                    </field>
-                    <field var='Description'>
-                      <value>Berkeley University</value>
-                    </field>
-                  </x>
-                </item>
-              </items>
+              <item>
+                <x xmlns='jabber:x:data' type='submit'>
+                  <field var='FORM_TYPE' type='hidden'>
+                    <value>urn:xmpp:mix:core:1</value>
+                  </field>
+                  <field var='Name'>
+                    <value>berkeley</value>
+                  </field>
+                  <field var='Description'>
+                    <value>Berkeley University</value>
+                  </field>
+                </x>
+              </item>
             </publish>
           </pubsub>
         </iq>
@@ -39,9 +37,7 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             type='result'>
           <pubsub xmlns='http://jabber.org/protocol/pubsub'>
             <publish node='urn:xmpp:mix:nodes:info'>
-              <items>
-                <item id='2020-09-23T00:36:20Z' xmlns='urn:xmpp:mix:core:1'/>
-              </items>
+              <item id='2020-09-23T00:36:20Z' xmlns='urn:xmpp:mix:core:1'/>
             </publish>
           </pubsub>
         </iq>
@@ -91,21 +87,19 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             type='set'>
           <pubsub xmlns='http://jabber.org/protocol/pubsub'>
             <publish node='urn:xmpp:mix:nodes:info'>
-              <items>
-                <item>
-                  <x xmlns='jabber:x:data' type='submit'>
-                    <field var='FORM_TYPE' type='hidden'>
-                      <value>urn:xmpp:mix:core:1</value>
-                    </field>
-                    <field var='Name'>
-                      <value>berkeley</value>
-                    </field>
-                    <field var='Description'>
-                      <value>Berkeley University</value>
-                    </field>
-                  </x>
-                </item>
-              </items>
+              <item>
+                <x xmlns='jabber:x:data' type='submit'>
+                  <field var='FORM_TYPE' type='hidden'>
+                    <value>urn:xmpp:mix:core:1</value>
+                  </field>
+                  <field var='Name'>
+                    <value>berkeley</value>
+                  </field>
+                  <field var='Description'>
+                    <value>Berkeley University</value>
+                  </field>
+                </x>
+              </item>
             </publish>
           </pubsub>
         </iq>
@@ -118,21 +112,19 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
             type='error'>
           <pubsub xmlns='http://jabber.org/protocol/pubsub'>
             <publish node='urn:xmpp:mix:nodes:info'>
-              <items>
-                <item>
-                  <x xmlns='jabber:x:data' type='submit'>
-                    <field var='FORM_TYPE' type='hidden'>
-                      <value>urn:xmpp:mix:core:1</value>
-                    </field>
-                    <field var='Name'>
-                      <value>berkeley</value>
-                    </field>
-                    <field var='Description'>
-                      <value>Berkeley University</value>
-                    </field>
-                  </x>
-                </item>
-              </items>
+              <item>
+                <x xmlns='jabber:x:data' type='submit'>
+                  <field var='FORM_TYPE' type='hidden'>
+                    <value>urn:xmpp:mix:core:1</value>
+                  </field>
+                  <field var='Name'>
+                    <value>berkeley</value>
+                  </field>
+                  <field var='Description'>
+                    <value>Berkeley University</value>
+                  </field>
+                </x>
+              </item>
             </publish>
           </pubsub>
           <error type='auth'>

@@ -188,12 +188,7 @@ defmodule Mixite.Pubsub do
         name: "publish",
         attrs: %{"node" => @ns_info},
         children: [
-          %Xmlel{
-            name: "items",
-            children: [
-              %Xmlel{name: "item", children: [%Xmlel{name: "x", children: fields}]}
-            ]
-          }
+          %Xmlel{name: "item", children: [%Xmlel{name: "x", children: fields}]}
         ]
       }) do
     fields =
@@ -214,12 +209,7 @@ defmodule Mixite.Pubsub do
         name: "publish",
         attrs: %{"node" => @ns_config},
         children: [
-          %Xmlel{
-            name: "items",
-            children: [
-              %Xmlel{name: "item", children: [%Xmlel{name: "x", children: fields}]}
-            ]
-          }
+          %Xmlel{name: "item", children: [%Xmlel{name: "x", children: fields}]}
         ]
       }) do
     fields =
@@ -236,7 +226,7 @@ defmodule Mixite.Pubsub do
     {:error, {"bad-request", "en", to_string(error)}}
   end
 
-  def wrapper(:pubsub, node, items) do
+  def wrapper(:result_get, node, items) do
     Xmlel.new("pubsub", %{"xmlns" => @ns_pubsub}, [
       Xmlel.new(
         "items",
@@ -252,25 +242,23 @@ defmodule Mixite.Pubsub do
     ])
   end
 
-  def wrapper(:result, node, items) do
+  def wrapper(:result_set, node, items) do
     Xmlel.new("pubsub", %{"xmlns" => @ns_pubsub}, [
-      Xmlel.new("publish", %{"node" => node}, [
-        Xmlel.new(
-          "items",
-          %{},
-          case node do
-            @ns_info ->
-              for %Xmlel{name: "item", attrs: %{"id" => id}} <- items do
-                %Xmlel{name: "item", attrs: %{"id" => id, "xmlns" => @ns_core}}
-              end
+      Xmlel.new(
+        "publish",
+        %{"node" => node},
+        case node do
+          @ns_info ->
+            for %Xmlel{name: "item", attrs: %{"id" => id}} <- items do
+              %Xmlel{name: "item", attrs: %{"id" => id, "xmlns" => @ns_core}}
+            end
 
-            @ns_config ->
-              for %Xmlel{name: "item", attrs: %{"id" => id}} <- items do
-                %Xmlel{name: "item", attrs: %{"id" => id, "xmlns" => @ns_admin}}
-              end
-          end
-        )
-      ])
+          @ns_config ->
+            for %Xmlel{name: "item", attrs: %{"id" => id}} <- items do
+              %Xmlel{name: "item", attrs: %{"id" => id, "xmlns" => @ns_admin}}
+            end
+        end
+      )
     ])
   end
 

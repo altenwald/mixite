@@ -37,12 +37,12 @@ defmodule Mixite.Xmpp.PubsubController do
 
           {:ok, %Xmlel{} = item} ->
             conn
-            |> iq_resp([Pubsub.wrapper(:pubsub, node, [item])])
+            |> iq_resp([Pubsub.wrapper(:result_get, node, [item])])
             |> send()
 
           {:ok, [%Xmlel{} | _] = items} ->
             conn
-            |> iq_resp([Pubsub.wrapper(:pubsub, node, items)])
+            |> iq_resp([Pubsub.wrapper(:result_get, node, items)])
             |> send()
         end
 
@@ -51,12 +51,12 @@ defmodule Mixite.Xmpp.PubsubController do
 
       {:ok, %Xmlel{} = item} ->
         conn
-        |> iq_resp([Pubsub.wrapper(:pubsub, node, [item])])
+        |> iq_resp([Pubsub.wrapper(:result_get, node, [item])])
         |> send()
 
       {:ok, [%Xmlel{} | _] = items} ->
         conn
-        |> iq_resp([Pubsub.wrapper(:pubsub, node, items)])
+        |> iq_resp([Pubsub.wrapper(:result_get, node, items)])
         |> send()
     end
   end
@@ -80,14 +80,14 @@ defmodule Mixite.Xmpp.PubsubController do
 
           {:ok, channel, %Xmlel{} = item} ->
             conn
-            |> iq_resp([Pubsub.wrapper(:result, node, [item])])
+            |> iq_resp([Pubsub.wrapper(:result_set, node, [item])])
             |> send()
 
             Broadcast.send(channel, [Pubsub.wrapper(:event, node, [item])], mix_jid)
 
           {:ok, channel, [%Xmlel{} | _] = items} ->
             conn
-            |> iq_resp([Pubsub.wrapper(:result, node, items)])
+            |> iq_resp([Pubsub.wrapper(:result_set, node, items)])
             |> send()
 
             Broadcast.send(channel, [Pubsub.wrapper(:event, node, items)], mix_jid)
@@ -98,14 +98,14 @@ defmodule Mixite.Xmpp.PubsubController do
 
       {:ok, channel, %Xmlel{} = item} ->
         conn
-        |> iq_resp([Pubsub.wrapper(:result, node, [item])])
+        |> iq_resp([Pubsub.wrapper(:result_set, node, [item])])
         |> send()
 
         Broadcast.send(channel, [Pubsub.wrapper(:event, node, [item])], mix_jid)
 
       {:ok, channel, [%Xmlel{} | _] = items} ->
         conn
-        |> iq_resp([Pubsub.wrapper(:result, node, items)])
+        |> iq_resp([Pubsub.wrapper(:result_set, node, items)])
         |> send()
 
         Broadcast.send(channel, [Pubsub.wrapper(:event, node, items)], mix_jid)

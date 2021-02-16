@@ -1,16 +1,7 @@
 defmodule Mixite.Pubsub do
+  use Mixite.Namespaces
   alias Exampple.Xml.Xmlel
   alias Mixite.Channel
-
-  @ns_xdata "jabber:x:data"
-  @ns_pubsub "http://jabber.org/protocol/pubsub"
-  @ns_event "http://jabber.org/protocol/pubsub#event"
-  @ns_admin "urn:xmpp:mix:admin:0"
-  @ns_core "urn:xmpp:mix:core:1"
-  @ns_config "urn:xmpp:mix:nodes:config"
-  @ns_info "urn:xmpp:mix:nodes:info"
-  @ns_participants "urn:xmpp:mix:nodes:participants"
-  @ns_allowed "urn:xmpp:mix:nodes:allowed"
 
   defmacro __using__(_params) do
     quote do
@@ -82,6 +73,10 @@ defmodule Mixite.Pubsub do
   defp field(name, type \\ nil, value)
   defp field(_name, _type, nil), do: []
   defp field(_name, _type, []), do: []
+
+  defp field(name, type, %MapSet{} = values) do
+    field(name, type, MapSet.to_list(values))
+  end
 
   defp field(name, type, value) do
     children =
@@ -170,11 +165,16 @@ defmodule Mixite.Pubsub do
   def render(channel, @ns_allowed, opts) do
     only_jids = opts[:only_jids]
 
-    for participant <- channel.participants, is_nil(only_jids) or participant.jid in only_jids do
-      %Xmlel{
-        name: "item",
-        attrs: %{"id" => participant.jid}
-      }
+    for jid <- Channel.get_allowed(channel), is_nil(only_jids) or jid in only_jids do
+      Xmlel.new("item", %{"id" => jid})
+    end
+  end
+
+  def render(channel, @ns_banned, opts) do
+    only_jids = opts[:only_jids]
+
+    for jid <- Channel.get_banned(channel), is_nil(only_jids) or jid in only_jids do
+      Xmlel.new("item", %{"id" => jid})
     end
   end
 
@@ -226,6 +226,16 @@ defmodule Mixite.Pubsub do
     {:error, {"bad-request", "en", to_string(error)}}
   end
 
+  def process_participants(%Xmlel{
+        name: action,
+        attrs: %{"node" => node},
+        children: items
+      })
+      when action in ["publish", "retract"] and node in [@ns_allowed, @ns_banned] do
+    jids = for %Xmlel{name: "item", attrs: %{"id" => jid}} <- items, do: jid
+    {:ok, %{"action" => action, "node" => node, "jids" => jids}}
+  end
+
   def wrapper(:result_get, node, items) do
     Xmlel.new("pubsub", %{"xmlns" => @ns_pubsub}, [
       Xmlel.new(
@@ -242,6 +252,10 @@ defmodule Mixite.Pubsub do
     ])
   end
 
+  def wrapper(:result_set, node, _items) when node in [@ns_allowed, @ns_banned] do
+    Xmlel.new("pubsub", %{"xmlns" => @ns_pubsub})
+  end
+
   def wrapper(:result_set, node, items) do
     Xmlel.new("pubsub", %{"xmlns" => @ns_pubsub}, [
       Xmlel.new(
@@ -250,12 +264,12 @@ defmodule Mixite.Pubsub do
         case node do
           @ns_info ->
             for %Xmlel{name: "item", attrs: %{"id" => id}} <- items do
-              %Xmlel{name: "item", attrs: %{"id" => id, "xmlns" => @ns_core}}
+              Xmlel.new("item", %{"id" => id, "xmlns" => @ns_core})
             end
 
           @ns_config ->
             for %Xmlel{name: "item", attrs: %{"id" => id}} <- items do
-              %Xmlel{name: "item", attrs: %{"id" => id, "xmlns" => @ns_admin}}
+              Xmlel.new("item", %{"id" => id, "xmlns" => @ns_admin})
             end
         end
       )

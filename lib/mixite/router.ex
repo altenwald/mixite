@@ -7,6 +7,10 @@ defmodule Mixite.Router do
     if Application.get_env(:mixite, :create_channel, true) do
       feature("urn:xmpp:mix:core:1#create-channel")
     end
+
+    if Application.get_env(:mixite, :searchable, true) do
+      feature("urn:xmpp:mix:core:1#searchable")
+    end
   end
 
   iq "http://jabber.org/protocol" do

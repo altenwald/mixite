@@ -1,5 +1,8 @@
 defmodule Mixite.DummyChannel do
   use Mixite.Channel
+  use Mixite.Namespaces
+
+  require Logger
 
   alias Exampple.Xml.Xmlel
 
@@ -16,7 +19,13 @@ defmodule Mixite.DummyChannel do
       description: "Pennsylvania University",
       nodes: @nodes,
       contact: nil,
-      owners: ["4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com"],
+      owners: MapSet.new(["4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com"]),
+      allowed:
+        MapSet.new([
+          "4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com",
+          "c3b10914-905d-4920-a5cd-146a0061e478@example.com"
+        ]),
+      banned: MapSet.new(["7c5ea0bf-ec6f-46e3-8f6b-c5e8aa80c968@example.com"]),
       participants: [
         %Participant{
           id: "ac3c30e4-e1d5-489f-80f4-671735f444ed",
@@ -95,8 +104,8 @@ defmodule Mixite.DummyChannel do
       description: "Friends from Iceland last trip (2021)",
       nodes: @nodes,
       contact: nil,
-      owners: ["8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com"],
-      administrators: ["c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com"],
+      owners: MapSet.new(["8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com"]),
+      administrators: MapSet.new(["c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com"]),
       participants: [
         %Participant{
           id: "07f3022d-cb01-4bd8-8333-0a398be4ee8f",
@@ -118,7 +127,7 @@ defmodule Mixite.DummyChannel do
       description: "Friends from Sweden last trip (2020)",
       nodes: @nodes,
       contact: nil,
-      owners: ["8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com"],
+      owners: MapSet.new(["8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com"]),
       participants: [
         %Participant{
           id: "07f3022d-cb01-4bd8-8333-0a398be4ee8f",
@@ -250,17 +259,9 @@ defmodule Mixite.DummyChannel do
     {:ok, %Channel{id: id, owners: [user_jid]}}
   end
 
-  def update(channel, params, "urn:xmpp:mix:nodes:info") do
-    {:ok,
-     %Channel{
-       channel
-       | name: params["name"] || channel.name,
-         description: params["description"] || channel.description
-     }}
-  end
-
-  def update(_channel, _params, _node) do
-    {:error, :invalid}
+  def update(_channel, new_channel, _params, node) do
+    Logger.debug("update #{node} for #{inspect(new_channel)}")
+    {:ok, new_channel}
   end
 
   def destroy(%Channel{owners: owners}, user_jid) do

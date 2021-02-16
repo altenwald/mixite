@@ -79,6 +79,92 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
       refute_receive _, 200
     end
 
+    test "nodes:config set for a channel" do
+      component_received(~x[
+        <iq from='4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com/UUID-c8y/1573'
+            id='111'
+            to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            type='set'>
+          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+            <publish node='urn:xmpp:mix:nodes:config'>
+              <item>
+                <x xmlns='jabber:x:data' type='submit'>
+                  <field var='FORM_TYPE' type='hidden'>
+                    <value>urn:xmpp:mix:admin:0</value>
+                  </field>
+                  <field var='Owner'>
+                    <value>4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com</value>
+                    <value>c3b10914-905d-4920-a5cd-146a0061e478@example.com</value>
+                  </field>
+                  <field var='Administrator'>
+                    <value>c3b10914-905d-4920-a5cd-146a0061e478@example.com</value>
+                  </field>
+                </x>
+              </item>
+            </publish>
+          </pubsub>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            id='111'
+            to='4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com/UUID-c8y/1573'
+            type='result'>
+          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+            <publish node='urn:xmpp:mix:nodes:config'>
+              <item id='2020-09-23T00:36:20Z' xmlns='urn:xmpp:mix:admin:0'/>
+            </publish>
+          </pubsub>
+        </iq>
+      ])
+
+      jids = [
+        "4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com",
+        "c3b10914-905d-4920-a5cd-146a0061e478@example.com"
+      ]
+
+      assert_all_stanza_receive(
+        for jid <- jids do
+          ~x[
+            <message from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+                     id='uuid'
+                     to='#{jid}'>
+              <event xmlns='http://jabber.org/protocol/pubsub#event'>
+                <items node='urn:xmpp:mix:nodes:config' xmlns='urn:xmpp:mix:admin:0'>
+                  <item id='2020-09-23T00:36:20Z'>
+                    <x xmlns='jabber:x:data' type='result'>
+                      <field var='FORM_TYPE' type='hidden'>
+                        <value>urn:xmpp:mix:admin:0</value>
+                      </field>
+                      <field var='Owner'>
+                        <value>4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com</value>
+                        <value>c3b10914-905d-4920-a5cd-146a0061e478@example.com</value>
+                      </field>
+                      <field var='Administrator'>
+                        <value>c3b10914-905d-4920-a5cd-146a0061e478@example.com</value>
+                      </field>
+                      <field type="hidden" var="ENV">
+                        <value>test</value>
+                      </field>
+                      <field var="Messages Node Subscription">
+                        <value>allowed</value>
+                      </field>
+                      <field var="No Private Messages">
+                        <value>true</value>
+                      </field>
+                    </x>
+                  </item>
+                </items>
+              </event>
+            </message>
+          ]
+        end
+      )
+
+      refute_receive _, 200
+    end
+
     test "nodes:info set for a channel forbidden" do
       component_received(~x[
         <iq from='c3b10914-905d-4920-a5cd-146a0061e478@example.com/UUID-c8y/1573'
@@ -137,6 +223,55 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
       ])
 
       refute_receive _, 200
+    end
+
+    test "nodes:allowed publish allowed user" do
+      component_received(~x[
+        <iq from='4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com/UUID-c8y/1573'
+            id='111'
+            to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            type='set'>
+          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+            <publish node='urn:xmpp:mix:nodes:allowed'>
+              <item id='7c5ea0bf-ec6f-46e3-8f6b-c5e8aa80c968@example.com'/>
+            </publish>
+          </pubsub>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq to='4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com/UUID-c8y/1573'
+            id='111'
+            from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            type='result'>
+          <pubsub xmlns='http://jabber.org/protocol/pubsub'/>
+        </iq>
+      ])
+
+      jids = [
+        "4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com",
+        "c3b10914-905d-4920-a5cd-146a0061e478@example.com"
+      ]
+
+      assert_all_stanza_receive(
+        for jid <- jids do
+          ~x[
+            <message from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+                     id='uuid'
+                     to='#{jid}'>
+              <event xmlns="http://jabber.org/protocol/pubsub#event">
+                <items node="urn:xmpp:mix:nodes:allowed">
+                  <item id="4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com"/>
+                  <item id='7c5ea0bf-ec6f-46e3-8f6b-c5e8aa80c968@example.com'/>
+                  <item id="c3b10914-905d-4920-a5cd-146a0061e478@example.com"/>
+                </items>
+              </event>
+            </message>
+          ]
+        end
+      )
+
+      refute_receive _, 500
     end
   end
 

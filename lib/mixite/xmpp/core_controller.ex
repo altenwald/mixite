@@ -1,5 +1,6 @@
 defmodule Mixite.Xmpp.CoreController do
   use Exampple.Component
+  use Mixite.Namespaces
 
   require Logger
 
@@ -17,7 +18,6 @@ defmodule Mixite.Xmpp.CoreController do
   alias Exampple.Xmpp.Jid
   alias Mixite.{Channel, EventManager}
 
-  @xmlns "urn:xmpp:mix:core:1"
   @prefix_ns "urn:xmpp:mix:nodes:"
 
   if Application.get_env(:mixite, :create_channel, true) do
@@ -32,7 +32,7 @@ defmodule Mixite.Xmpp.CoreController do
 
           payload = %Xmlel{
             name: "create",
-            attrs: %{"xmlns" => @xmlns, "channel" => channel.id}
+            attrs: %{"xmlns" => @ns_core, "channel" => channel.id}
           }
 
           conn
@@ -90,97 +90,91 @@ defmodule Mixite.Xmpp.CoreController do
   defp set_nick(conn, [%Xmlel{children: [nick]}], channel) do
     user_jid = Jid.to_bare(conn.from_jid)
     mix_jid = Jid.to_bare(conn.to_jid)
+    participant = Enum.find(channel.participants, &(&1.jid == user_jid))
 
-    if Channel.is_participant?(channel, user_jid) do
-      participant = Enum.find(channel.participants, &(&1.jid == user_jid))
+    case Channel.set_nick(channel, user_jid, nick) do
+      :ok when nick != participant.nick ->
+        conn
+        |> iq_resp()
+        |> send()
 
-      case Channel.set_nick(channel, user_jid, nick) do
-        :ok when nick != participant.nick ->
-          conn
-          |> iq_resp()
-          |> send()
+        {participant, channel} = Channel.split(channel, user_jid)
+        EventManager.notify({:set_nick, nick, participant, mix_jid, user_jid, channel})
 
-          {participant, channel} = Channel.split(channel, user_jid)
-          EventManager.notify({:set_nick, nick, participant, mix_jid, user_jid, channel})
+      :ok ->
+        conn
+        |> iq_resp()
+        |> send()
 
-        :ok ->
-          conn
-          |> iq_resp()
-          |> send()
+      {:error, :forbidden} ->
+        send_forbidden(conn)
 
-        {:error, :conflict} ->
-          Logger.error("user #{user_jid} cannot change nick to #{nick} because conflict")
-          send_conflict(conn, "en", "nickname already assigned")
+      {:error, :conflict} ->
+        Logger.error("user #{user_jid} cannot change nick to #{nick} because conflict")
+        send_conflict(conn, "en", "nickname already assigned")
 
-        {:error, error} ->
-          Logger.error("user #{user_jid} cannot change nick to #{nick} because #{inspect(error)}")
-          send_internal_error(conn)
-      end
-    else
-      send_forbidden(conn)
+      {:error, error} ->
+        Logger.error("user #{user_jid} cannot change nick to #{nick} because #{inspect(error)}")
+        send_internal_error(conn)
     end
   end
 
   defp leave(conn, _query, channel) do
     user_jid = Jid.to_bare(conn.from_jid)
+    mix_jid = Jid.to_bare(conn.to_jid)
 
-    if Channel.is_participant?(channel, user_jid) do
-      mix_jid = Jid.to_bare(conn.to_jid)
+    case Channel.leave(channel, user_jid) do
+      :ok ->
+        {participant, channel} = Channel.split(channel, user_jid)
+        EventManager.notify({:leave, participant.id, mix_jid, user_jid, channel})
 
-      case Channel.leave(channel, user_jid) do
-        :ok ->
-          {participant, channel} = Channel.split(channel, user_jid)
-          EventManager.notify({:leave, participant.id, mix_jid, user_jid, channel})
+        conn
+        |> iq_resp()
+        |> send()
 
-          conn
-          |> iq_resp()
-          |> send()
+      {:error, :forbidden} ->
+        send_forbidden(conn)
 
-        {:error, _} = error ->
-          Logger.error("leave feature error: #{inspect(error)}")
-          send_feature_not_implemented(conn, "en", "leave is not supported")
-      end
-    else
-      send_forbidden(conn)
+      {:error, _} = error ->
+        Logger.error("leave feature error: #{inspect(error)}")
+        send_feature_not_implemented(conn, "en", "leave is not supported")
     end
   end
 
   defp update(conn, query, channel) do
     user_jid = Jid.to_bare(conn.from_jid)
 
-    if Channel.is_participant?(channel, user_jid) do
-      nodes_add =
-        for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["subscribe"], do: node
+    nodes_add = for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["subscribe"], do: node
 
-      nodes_rem =
-        for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["unsubscribe"], do: node
+    nodes_rem =
+      for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["unsubscribe"], do: node
 
-      case Channel.update_subscription(channel, user_jid, nodes_add, nodes_rem) do
-        {:ok, {_channel, add_nodes, rem_nodes}} ->
-          from_jid = Jid.to_bare(conn.from_jid)
-          add_nodes = for node <- add_nodes, do: subscribe(node)
-          rem_nodes = for node <- rem_nodes, do: unsubscribe(node)
+    case Channel.update_subscription(channel, user_jid, nodes_add, nodes_rem) do
+      {:ok, {_channel, add_nodes, rem_nodes}} ->
+        from_jid = Jid.to_bare(conn.from_jid)
+        add_nodes = for node <- add_nodes, do: subscribe(node)
+        rem_nodes = for node <- rem_nodes, do: unsubscribe(node)
 
-          payload = %Xmlel{
-            name: "update-subscription",
-            attrs: %{"xmlns" => @xmlns, "jid" => from_jid},
-            children: add_nodes ++ rem_nodes
-          }
+        payload = %Xmlel{
+          name: "update-subscription",
+          attrs: %{"xmlns" => @ns_core, "jid" => from_jid},
+          children: add_nodes ++ rem_nodes
+        }
 
-          conn
-          |> iq_resp([payload])
-          |> send()
+        conn
+        |> iq_resp([payload])
+        |> send()
 
-        {:error, :not_implemented} ->
-          Logger.error("update feature not implemented")
-          send_feature_not_implemented(conn, "en", "update is not supported")
+      {:error, :forbidden} ->
+        send_forbidden(conn)
 
-        {:error, _} = error ->
-          Logger.error("update failed: #{inspect(error)}")
-          send_internal_error(conn)
-      end
-    else
-      send_forbidden(conn)
+      {:error, :not_implemented} ->
+        Logger.error("update feature not implemented")
+        send_feature_not_implemented(conn, "en", "update is not supported")
+
+      {:error, _} = error ->
+        Logger.error("update failed: #{inspect(error)}")
+        send_internal_error(conn)
     end
   end
 
@@ -211,7 +205,7 @@ defmodule Mixite.Xmpp.CoreController do
       {:ok, {participant, nodes}} ->
         payload = %Xmlel{
           name: "join",
-          attrs: %{"xmlns" => @xmlns, "id" => participant.id},
+          attrs: %{"xmlns" => @ns_core, "id" => participant.id},
           children:
             for(node <- nodes, do: subscribe(node)) ++
               [%Xmlel{name: "nick", children: [nick]}]

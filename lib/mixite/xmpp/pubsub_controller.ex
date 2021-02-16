@@ -1,5 +1,6 @@
 defmodule Mixite.Xmpp.PubsubController do
   use Exampple.Component
+  use Mixite.Namespaces
 
   require Logger
 
@@ -10,41 +11,27 @@ defmodule Mixite.Xmpp.PubsubController do
       send_error: 2
     ]
 
-  alias Exampple.Router.Conn
   alias Exampple.Xml.Xmlel
   alias Exampple.Xmpp.Jid
   alias Mixite.{Broadcast, Channel, Pubsub}
 
-  @ns_config "urn:xmpp:mix:nodes:config"
-  @ns_info "urn:xmpp:mix:nodes:info"
-  @ns_participants "urn:xmpp:mix:nodes:participants"
-
   def get(conn, [%Xmlel{children: [%Xmlel{attrs: %{"node" => node}}]}]) do
     channel_id = if conn.to_jid.node != "", do: conn.to_jid.node
     from_jid = Jid.to_bare(conn.from_jid)
+    proc_get_node = &Pubsub.process_get_node/3
+    process_get_result(conn, channel_id, from_jid, node, proc_get_node)
+  end
 
-    case Pubsub.process_get_node(channel_id, from_jid, node) do
+  defp process_get_result(conn, channel_id, from_jid, node, proc_get_node) do
+    case proc_get_node.(channel_id, from_jid, node) do
       :ignore ->
-        case process_get_node(conn, node) do
-          nil ->
-            send_not_found(conn)
+        process_get_result(conn, channel_id, from_jid, node, &process_get_node/3)
 
-          :forbidden ->
-            send_forbidden(conn)
+      nil ->
+        send_not_found(conn)
 
-          {:error, error} ->
-            send_error(conn, error)
-
-          {:ok, %Xmlel{} = item} ->
-            conn
-            |> iq_resp([Pubsub.wrapper(:result_get, node, [item])])
-            |> send()
-
-          {:ok, [%Xmlel{} | _] = items} ->
-            conn
-            |> iq_resp([Pubsub.wrapper(:result_get, node, items)])
-            |> send()
-        end
+      :forbidden ->
+        send_forbidden(conn)
 
       {:error, error} ->
         send_error(conn, error)
@@ -65,33 +52,20 @@ defmodule Mixite.Xmpp.PubsubController do
     channel_id = if conn.to_jid.node != "", do: conn.to_jid.node
     from_jid = Jid.to_bare(conn.from_jid)
     mix_jid = Jid.to_bare(conn.to_jid)
+    proc_set_node = &Pubsub.process_set_node/4
+    process_set_result(conn, channel_id, from_jid, mix_jid, node, query, proc_set_node)
+  end
 
-    case Pubsub.process_set_node(channel_id, from_jid, node, query) do
+  defp process_set_result(conn, channel_id, from_jid, mix_jid, node, query, proc_set_node) do
+    case proc_set_node.(channel_id, from_jid, node, query) do
       :ignore ->
-        case process_set_node(conn, node, query) do
-          nil ->
-            send_not_found(conn)
+        process_set_result(conn, channel_id, from_jid, mix_jid, node, query, &process_set_node/4)
 
-          :forbidden ->
-            send_forbidden(conn)
+      nil ->
+        send_not_found(conn)
 
-          {:error, error} ->
-            send_error(conn, error)
-
-          {:ok, channel, %Xmlel{} = item} ->
-            conn
-            |> iq_resp([Pubsub.wrapper(:result_set, node, [item])])
-            |> send()
-
-            Broadcast.send(channel, [Pubsub.wrapper(:event, node, [item])], mix_jid)
-
-          {:ok, channel, [%Xmlel{} | _] = items} ->
-            conn
-            |> iq_resp([Pubsub.wrapper(:result_set, node, items)])
-            |> send()
-
-            Broadcast.send(channel, [Pubsub.wrapper(:event, node, items)], mix_jid)
-        end
+      :forbidden ->
+        send_forbidden(conn)
 
       {:error, error} ->
         send_error(conn, error)
@@ -112,10 +86,7 @@ defmodule Mixite.Xmpp.PubsubController do
     end
   end
 
-  def process_get_node(%Conn{to_jid: %Jid{node: channel_id}} = conn, @ns_config)
-      when channel_id != "" do
-    from_jid = Jid.to_bare(conn.from_jid)
-
+  def process_get_node(channel_id, from_jid, @ns_config) when channel_id != "" do
     with channel = %Channel{} <- Channel.get(channel_id),
          true <- Channel.can_view?(channel, from_jid) do
       {:ok, Pubsub.render(channel, @ns_config)}
@@ -125,10 +96,7 @@ defmodule Mixite.Xmpp.PubsubController do
     end
   end
 
-  def process_get_node(%Conn{to_jid: %Jid{node: channel_id}} = conn, @ns_info)
-      when channel_id != "" do
-    from_jid = Jid.to_bare(conn.from_jid)
-
+  def process_get_node(channel_id, from_jid, @ns_info) when channel_id != "" do
     with channel = %Channel{} <- Channel.get(channel_id),
          true <- Channel.can_view?(channel, from_jid) do
       {:ok, Pubsub.render(channel, @ns_info)}
@@ -138,36 +106,30 @@ defmodule Mixite.Xmpp.PubsubController do
     end
   end
 
-  def process_get_node(
-        %Conn{to_jid: %Jid{node: channel_id}} = conn,
-        @ns_participants
-      )
-      when channel_id != "" do
-    from_jid = Jid.to_bare(conn.from_jid)
-
+  def process_get_node(channel_id, from_jid, node)
+      when channel_id != "" and node in [@ns_participants, @ns_allowed, @ns_banned] do
     with channel = %Channel{} <- Channel.get(channel_id),
          true <- Channel.can_view?(channel, from_jid) do
-      {:ok, Pubsub.render(channel, @ns_participants)}
+      {:ok, Pubsub.render(channel, node)}
     else
       nil -> nil
       false -> :forbidden
     end
   end
 
-  def process_get_node(_conn, nodes) do
+  def process_get_node(_channel_id, _from_jid, nodes) do
     {:error, {"feature-not-implemented", "en", "#{nodes} not implemented"}}
   end
 
-  def process_set_node(%Conn{to_jid: %Jid{node: channel_id}} = conn, @ns_config, query)
-      when channel_id != "" do
-    from_jid = Jid.to_bare(conn.from_jid)
-
+  def process_set_node(channel_id, from_jid, @ns_config, query) when channel_id != "" do
     with channel = %Channel{} <- Channel.get(channel_id),
-         {:ok, config} <- Pubsub.process_config(query),
-         true <- Channel.can_modify?(channel, from_jid) do
-      case Channel.update(channel, config, @ns_config) do
+         {:ok, config} <- Pubsub.process_config(query) do
+      case Channel.update(channel, from_jid, config, @ns_config) do
         {:ok, channel} ->
           {:ok, channel, Pubsub.render(channel, @ns_config)}
+
+        {:error, :forbidden} ->
+          :forbidden
 
         {:error, error} ->
           Logger.error("cannot update config channel: #{inspect(error)}")
@@ -177,25 +139,21 @@ defmodule Mixite.Xmpp.PubsubController do
       nil ->
         nil
 
-      false ->
-        :forbidden
-
       {:error, error} ->
         Logger.error("cannot update config channel: #{inspect(error)}")
         {:error, error}
     end
   end
 
-  def process_set_node(%Conn{to_jid: %Jid{node: channel_id}} = conn, @ns_info, query)
-      when channel_id != "" do
-    from_jid = Jid.to_bare(conn.from_jid)
-
+  def process_set_node(channel_id, from_jid, @ns_info, query) when channel_id != "" do
     with channel = %Channel{} <- Channel.get(channel_id),
-         {:ok, info} <- Pubsub.process_info(query),
-         true <- Channel.can_modify?(channel, from_jid) do
-      case Channel.update(channel, info, @ns_info) do
+         {:ok, info} <- Pubsub.process_info(query) do
+      case Channel.update(channel, from_jid, info, @ns_info) do
         {:ok, channel} ->
           {:ok, channel, Pubsub.render(channel, @ns_info)}
+
+        {:error, :forbidden} ->
+          :forbidden
 
         {:error, error} ->
           Logger.error("cannot update info channel: #{inspect(error)}")
@@ -205,8 +163,30 @@ defmodule Mixite.Xmpp.PubsubController do
       nil ->
         nil
 
-      false ->
-        :forbidden
+      {:error, error} ->
+        Logger.error("cannot update info channel: #{inspect(error)}")
+        {:error, {"internal-server-error", "en", "An error happened"}}
+    end
+  end
+
+  def process_set_node(channel_id, from_jid, node, query)
+      when channel_id != "" and node in [@ns_allowed, @ns_banned] do
+    with channel = %Channel{} <- Channel.get(channel_id),
+         {:ok, info} <- Pubsub.process_participants(query) do
+      case Channel.update(channel, from_jid, info, node) do
+        {:ok, channel, _action, _jids} ->
+          {:ok, channel, Pubsub.render(channel, node)}
+
+        {:error, :forbidden} ->
+          :forbidden
+
+        {:error, error} ->
+          Logger.error("cannot update info channel: #{inspect(error)}")
+          {:error, {"internal-server-error", "en", "An error happened"}}
+      end
+    else
+      nil ->
+        nil
 
       {:error, error} ->
         Logger.error("cannot update info channel: #{inspect(error)}")
@@ -214,7 +194,8 @@ defmodule Mixite.Xmpp.PubsubController do
     end
   end
 
-  def process_set_node(_conn, nodes) do
+  def process_set_node(channel_id, _from_jid, nodes, query) do
+    Logger.warn("#{inspect(channel_id)} - #{inspect(nodes)}: #{inspect(query)}")
     {:error, {"feature-not-implemented", "en", "#{nodes} not implemented"}}
   end
 end

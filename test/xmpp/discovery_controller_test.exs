@@ -21,6 +21,7 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
             <feature var="http://jabber.org/protocol/pubsub"/>
             <feature var="urn:xmpp:mix:core:1"/>
             <feature var="urn:xmpp:mix:core:1#create-channel"/>
+            <feature var="urn:xmpp:mix:core:1#searchable"/>
           </query>
         </iq>
       ])

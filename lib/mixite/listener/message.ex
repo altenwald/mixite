@@ -18,10 +18,6 @@ defmodule Mixite.Listener.Message do
   end
 
   @impl GenStage
-  def handle_events([{:broadcast, _from_jid, _channel, _payload}], _from, state) do
-    {:noreply, [], state}
-  end
-
   def handle_events([{:set_nick, nick, participant, mix_jid, user_jid, channel}], _from, state) do
     participants =
       (channel.participants -- [participant]) ++

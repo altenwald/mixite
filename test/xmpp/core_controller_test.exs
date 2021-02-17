@@ -767,21 +767,20 @@ defmodule Mixite.Xmpp.CoreControllerTest do
         </iq>
       ])
 
-      assert_stanza_receive(~x[
-        <iq type='result'
-            from='c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com'
-            to='e784345c-4bed-4ce0-9610-e6f57b9ac6f2@example.com/hectic'
-            id='50'>
-          <leave xmlns='urn:xmpp:mix:core:1'/>
-        </iq>
-      ])
-
       to_jids = [
         "2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com",
         "f8e744de-3d1b-4528-9cfd-3fa111f7f626@example.com"
       ]
 
       stanzas =
+        [~x[
+          <iq type='result'
+              from='c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com'
+              to='e784345c-4bed-4ce0-9610-e6f57b9ac6f2@example.com/hectic'
+              id='50'>
+            <leave xmlns='urn:xmpp:mix:core:1'/>
+          </iq>
+        ]] ++
         for to_jid <- to_jids do
           ~x[
           <message from="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"

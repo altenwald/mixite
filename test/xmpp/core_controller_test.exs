@@ -781,8 +781,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
             <leave xmlns='urn:xmpp:mix:core:1'/>
           </iq>
         ]] ++
-        for to_jid <- to_jids do
-          ~x[
+          for to_jid <- to_jids do
+            ~x[
           <message from="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
                   id="uuid"
                   to="#{to_jid}">
@@ -795,7 +795,7 @@ defmodule Mixite.Xmpp.CoreControllerTest do
             </event>
           </message>
         ]
-        end
+          end
 
       assert_all_stanza_receive(stanzas)
 
@@ -827,8 +827,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
             <leave xmlns='urn:xmpp:mix:core:1'/>
           </iq>
         ]] ++
-        for to_jid <- to_jids do
-          ~x[
+          for to_jid <- to_jids do
+            ~x[
           <message from="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
                   id="uuid"
                   to="#{to_jid}">
@@ -842,7 +842,7 @@ defmodule Mixite.Xmpp.CoreControllerTest do
             <store xmlns='urn:xmpp:hints'/>
           </message>
         ]
-        end
+          end
 
       assert_all_stanza_receive(stanzas)
 

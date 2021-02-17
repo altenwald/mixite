@@ -9,9 +9,10 @@ defmodule Mixite.Broadcast do
   def send(channel, payload, from_jid, opts \\ []) do
     ignore_jids = opts[:ignore_jids] || []
     type = opts[:type]
+    add_extra? = !!opts[:extra]
 
     message_id = Channel.gen_uuid()
-    payload = payload ++ extra_payload()
+    payload = if add_extra?, do: payload ++ extra_payload(), else: payload
 
     channel.participants
     |> Enum.reject(&(&1.jid in ignore_jids))

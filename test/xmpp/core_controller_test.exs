@@ -802,6 +802,54 @@ defmodule Mixite.Xmpp.CoreControllerTest do
       refute_receive _, 200
     end
 
+    test "correctly with extra payload" do
+      Application.put_env(:mixite, :extra_payload, "<store xmlns='urn:xmpp:hints'/>")
+      component_received(~x[
+        <iq type='set'
+            to='c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com'
+            from='e784345c-4bed-4ce0-9610-e6f57b9ac6f2@example.com/hectic'
+            id='50'>
+          <leave xmlns='urn:xmpp:mix:core:1'/>
+        </iq>
+      ])
+
+      to_jids = [
+        "2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com",
+        "f8e744de-3d1b-4528-9cfd-3fa111f7f626@example.com"
+      ]
+
+      stanzas =
+        [~x[
+          <iq type='result'
+              from='c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com'
+              to='e784345c-4bed-4ce0-9610-e6f57b9ac6f2@example.com/hectic'
+              id='50'>
+            <leave xmlns='urn:xmpp:mix:core:1'/>
+          </iq>
+        ]] ++
+        for to_jid <- to_jids do
+          ~x[
+          <message from="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
+                  id="uuid"
+                  to="#{to_jid}">
+            <event xmlns="http://jabber.org/protocol/pubsub#event">
+              <items node="urn:xmpp:mix:nodes:participants">
+                <retract id="3cb92e3e-798b-49c6-a157-2122356e4cea">
+                  <jid>e784345c-4bed-4ce0-9610-e6f57b9ac6f2@example.com</jid>
+                </retract>
+              </items>
+            </event>
+            <store xmlns='urn:xmpp:hints'/>
+          </message>
+        ]
+        end
+
+      assert_all_stanza_receive(stanzas)
+
+      Application.delete_env(:mixite, :extra_payload)
+      refute_receive _, 200
+    end
+
     test "incorrectly: not found" do
       component_received(~x[
         <iq type='set'

@@ -75,14 +75,14 @@ defmodule Mixite.Xmpp.PubsubController do
         |> iq_resp([Pubsub.wrapper(:result_set, node, [item])])
         |> send()
 
-        Broadcast.send(channel, [Pubsub.wrapper(:event, node, [item])], mix_jid)
+        Broadcast.send(channel, [Pubsub.wrapper(:event, node, [item])], mix_jid, extra: true)
 
       {:ok, channel, [%Xmlel{} | _] = items} ->
         conn
         |> iq_resp([Pubsub.wrapper(:result_set, node, items)])
         |> send()
 
-        Broadcast.send(channel, [Pubsub.wrapper(:event, node, items)], mix_jid)
+        Broadcast.send(channel, [Pubsub.wrapper(:event, node, items)], mix_jid, extra: true)
     end
   end
 

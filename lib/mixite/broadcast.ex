@@ -12,15 +12,15 @@ defmodule Mixite.Broadcast do
       alias Mixite.Broadcast
 
       @impl Broadcast
-      def extra_payload(_channel, _from_jid, payload, _opts) do
+      def extra_payload(_channel, _user_jid, _from_jid, payload, _opts) do
         payload
       end
 
-      defoverridable extra_payload: 4
+      defoverridable extra_payload: 5
     end
   end
 
-  @callback extra_payload(Channel.t(), Channel.user_jid(), [Xmlel.t()], Keyword.t()) :: [Xmlel.t()]
+  @callback extra_payload(Channel.t(), Channel.user_jid(), Channel.user_jid(), [Xmlel.t()], Keyword.t()) :: [Xmlel.t()]
 
   @doc """
   Get the backend implementation for Mixite.
@@ -39,17 +39,17 @@ defmodule Mixite.Broadcast do
     end
   end
 
-  @spec maybe_extra_payload(Channel.t(), Channel.user_jid(), [Xmlel.t()], Keyword.t()) :: [Xmlel.t()] | :drop
-  defp maybe_extra_payload(channel, from_jid, payload, opts) do
-    backend().extra_payload(channel, from_jid, payload, opts)
+  @spec maybe_extra_payload(Channel.t(), Channel.user_jid(), Channel.user_jid(), [Xmlel.t()], Keyword.t()) :: [Xmlel.t()] | :drop
+  defp maybe_extra_payload(channel, user_jid, from_jid, payload, opts) do
+    backend().extra_payload(channel, user_jid, from_jid, payload, opts)
   end
 
-  def send(channel, payload, from_jid, opts \\ []) do
+  def send(%Channel{} = channel, user_jid, payload, from_jid, opts \\ []) do
     ignore_jids = opts[:ignore_jids] || []
     type = opts[:type]
 
     message_id = Channel.gen_uuid()
-    case maybe_extra_payload(channel, from_jid, payload, opts) do
+    case maybe_extra_payload(channel, user_jid, from_jid, payload, opts) do
       :drop ->
         :ok
 

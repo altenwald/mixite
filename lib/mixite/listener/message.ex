@@ -26,7 +26,7 @@ defmodule Mixite.Listener.Message do
     channel = %Channel{channel | participants: participants}
     items = Pubsub.render(channel, @ns_participants, only_jids: [user_jid])
     payload = Pubsub.wrapper(:event, @ns_participants, items)
-    Broadcast.send(channel, [payload], mix_jid, ignore_jids: [user_jid], extra: true)
+    Broadcast.send(channel, user_jid, [payload], mix_jid, ignore_jids: [user_jid])
     {:noreply, [], state}
   end
 
@@ -38,7 +38,7 @@ defmodule Mixite.Listener.Message do
         ])
       ])
 
-    Broadcast.send(channel, [payload], from_jid, ignore_jids: [user_jid], extra: true)
+    Broadcast.send(channel, user_jid, [payload], from_jid, ignore_jids: [user_jid])
     {:noreply, [], state}
   end
 
@@ -50,7 +50,7 @@ defmodule Mixite.Listener.Message do
     items = Pubsub.render(channel, @ns_participants, only_jids: [user_jid])
     payload = Pubsub.wrapper(:event, @ns_participants, items)
 
-    Broadcast.send(channel, [payload], from_jid, ignore_jids: [user_jid], extra: true)
+    Broadcast.send(channel, user_jid, [payload], from_jid, ignore_jids: [user_jid])
     {:noreply, [], state}
   end
 end

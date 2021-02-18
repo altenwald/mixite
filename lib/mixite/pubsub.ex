@@ -74,11 +74,7 @@ defmodule Mixite.Pubsub do
   defp field(_name, _type, nil), do: []
   defp field(_name, _type, []), do: []
 
-  defp field(name, type, %MapSet{} = values) do
-    field(name, type, MapSet.to_list(values))
-  end
-
-  defp field(name, type, value) do
+  defp field(name, type, value) when not is_struct(value, MapSet) do
     children =
       if is_list(value) do
         for v <- value, do: %Xmlel{name: "value", children: [v]}
@@ -94,6 +90,10 @@ defmodule Mixite.Pubsub do
       end
 
     [%Xmlel{name: "field", attrs: attrs, children: children}]
+  end
+
+  defp field(name, type, values) do
+    field(name, type, MapSet.to_list(values))
   end
 
   def render(channel, nodes, opts \\ [])

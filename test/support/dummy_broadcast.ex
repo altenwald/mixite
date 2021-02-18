@@ -4,7 +4,7 @@ defmodule Mixite.DummyBroadcast do
   alias Exampple.Xml.Xmlel
 
   @impl Mixite.Broadcast
-  def extra_payload(_channel, _from_jid, [%Xmlel{
+  def extra_payload(_channel, _user_jid, _from_jid, [%Xmlel{
     name: "event",
     children: [%Xmlel{name: "items", children: [
       %Xmlel{name: "retract", children: [
@@ -17,7 +17,7 @@ defmodule Mixite.DummyBroadcast do
     payload ++ [~x[<store xmlns='urn:xmpp:hints'/>]]
   end
 
-  def extra_payload(_channel, _from_jid, payload, _opts) do
+  def extra_payload(_channel, _user_jid, _from_jid, payload, _opts) do
     payload
   end
 end

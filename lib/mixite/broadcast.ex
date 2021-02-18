@@ -6,49 +6,61 @@ defmodule Mixite.Broadcast do
 
   import Exampple.Xml.Xmlel, only: [sigil_x: 2]
 
+  defmacro __using__(_params) do
+    quote do
+      @behaviour Mixite.Broadcast
+      alias Mixite.Broadcast
+
+      @impl Broadcast
+      def extra_payload(_channel, _from_jid, payload, _opts) do
+        payload
+      end
+
+      defoverridable extra_payload: 4
+    end
+  end
+
+  @callback extra_payload(Channel.t(), Channel.user_jid(), [Xmlel.t()], Keyword.t()) :: [Xmlel.t()]
+
+  @doc """
+  Get the backend implementation for Mixite.
+
+  Examples:
+
+      iex> require Mixite.Broadcast
+      iex> Mixite.Broadcast.backend()
+      Mixite.DummyBroadcast
+  """
+  defmacro backend() do
+    backend = Application.get_env(:mixite, :broadcast, Mixite.DummyBroadcast)
+
+    quote do
+      unquote(backend)
+    end
+  end
+
+  @spec maybe_extra_payload(Channel.t(), Channel.user_jid(), [Xmlel.t()], Keyword.t()) :: [Xmlel.t()] | :drop
+  defp maybe_extra_payload(channel, from_jid, payload, opts) do
+    backend().extra_payload(channel, from_jid, payload, opts)
+  end
+
   def send(channel, payload, from_jid, opts \\ []) do
     ignore_jids = opts[:ignore_jids] || []
     type = opts[:type]
-    add_extra? = !!opts[:extra]
 
     message_id = Channel.gen_uuid()
-    payload = if add_extra?, do: payload ++ extra_payload(), else: payload
+    case maybe_extra_payload(channel, from_jid, payload, opts) do
+      :drop ->
+        :ok
 
-    channel.participants
-    |> Enum.reject(&(&1.jid in ignore_jids))
-    |> Enum.each(fn %Participant{jid: jid} ->
-      payload
-      |> Stanza.message(from_jid, message_id, jid, type)
-      |> Component.send()
-    end)
-  end
-
-  @doc """
-  Get extra payload to be add to the broadcast messages.
-
-  Examples:
-      iex> Application.put_env(:mixite, :extra_payload, "<store/>")
-      iex> Mixite.Broadcast.extra_payload()
-      [%Exampple.Xml.Xmlel{name: "store"}]
-
-      iex> Application.put_env(:mixite, :extra_payload, [])
-      iex> Mixite.Broadcast.extra_payload()
-      []
-
-      iex> Application.put_env(:mixite, :extra_payload, %Exampple.Xml.Xmlel{name: "archive"})
-      iex> Mixite.Broadcast.extra_payload()
-      [%Exampple.Xml.Xmlel{name: "archive"}]
-
-      iex> Application.put_env(:mixite, :extra_payload, [%Exampple.Xml.Xmlel{name: "stanza-id"}])
-      iex> Mixite.Broadcast.extra_payload()
-      [%Exampple.Xml.Xmlel{name: "stanza-id"}]
-  """
-  def extra_payload() do
-    case Application.get_env(:mixite, :extra_payload, []) do
-      [] -> []
-      xmlel when is_binary(xmlel) -> [~x[#{xmlel}]]
-      %Xmlel{} = xmlel -> [xmlel]
-      [%Xmlel{} | _] = xmlel -> xmlel
+      payload ->
+        channel.participants
+        |> Enum.reject(&(&1.jid in ignore_jids))
+        |> Enum.each(fn %Participant{jid: jid} ->
+          payload
+          |> Stanza.message(from_jid, message_id, jid, type)
+          |> Component.send()
+        end)
     end
   end
 end

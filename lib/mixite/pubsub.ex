@@ -141,16 +141,6 @@ defmodule Mixite.Pubsub do
     }
   end
 
-  defp merge(list, []), do: list
-
-  defp merge(list, [{key, value} | list2]) do
-    if List.keymember?(list, key, 0) do
-      merge(List.keyreplace(list, key, 0, {key, value}), list2)
-    else
-      merge(list ++ [{key, value}], list2)
-    end
-  end
-
   def render(channel, @ns_info, _opts) do
     %Xmlel{
       name: "item",
@@ -207,6 +197,16 @@ defmodule Mixite.Pubsub do
 
     for jid <- Channel.get_banned(channel), is_nil(only_jids) or jid in only_jids do
       Xmlel.new("item", %{"id" => jid})
+    end
+  end
+
+  defp merge(list, []), do: list
+
+  defp merge(list, [{key, value} | list2]) do
+    if List.keymember?(list, key, 0) do
+      merge(List.keyreplace(list, key, 0, {key, value}), list2)
+    else
+      merge(list ++ [{key, value}], list2)
     end
   end
 
@@ -294,7 +294,7 @@ defmodule Mixite.Pubsub do
         "publish",
         %{"node" => node},
         case node do
-          @ns_info ->
+          ns when ns in [@ns_info, @ns_allowed, @ns_banned, @ns_participants] ->
             for %Xmlel{name: "item", attrs: %{"id" => id}} <- items do
               Xmlel.new("item", %{"id" => id, "xmlns" => @ns_core})
             end
@@ -302,6 +302,11 @@ defmodule Mixite.Pubsub do
           @ns_config ->
             for %Xmlel{name: "item", attrs: %{"id" => id}} <- items do
               Xmlel.new("item", %{"id" => id, "xmlns" => @ns_admin})
+            end
+
+          ns when ns in [@ns_avatar_metadata, @ns_avatar_data] ->
+            for %Xmlel{name: "item", attrs: %{"id" => id}} <- items do
+              Xmlel.new("item", %{"id" => id, "xmlns" => ns})
             end
         end
       )

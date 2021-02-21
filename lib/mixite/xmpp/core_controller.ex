@@ -156,8 +156,8 @@ defmodule Mixite.Xmpp.CoreController do
     case Channel.update_subscription(channel, user_jid, nodes_add, nodes_rem) do
       {:ok, {_channel, add_nodes, rem_nodes}} ->
         from_jid = Jid.to_bare(conn.from_jid)
-        add_nodes = Enum.reduce(add_nodes, [], & &2 ++ subscribe(&1))
-        rem_nodes = Enum.reduce(rem_nodes, [], & &2 ++ unsubscribe(&1))
+        add_nodes = Enum.reduce(add_nodes, [], &(&2 ++ subscribe(&1)))
+        rem_nodes = Enum.reduce(rem_nodes, [], &(&2 ++ unsubscribe(&1)))
 
         payload = %Xmlel{
           name: "update-subscription",
@@ -214,11 +214,12 @@ defmodule Mixite.Xmpp.CoreController do
 
       {:ok, {participant, nodes}} ->
         Logger.debug("subscribe nodes in join: #{inspect(nodes)}")
+
         payload = %Xmlel{
           name: "join",
           attrs: %{"xmlns" => @ns_core, "id" => participant.id},
           children:
-            Enum.reduce(nodes, [], & &2 ++ subscribe(&1)) ++
+            Enum.reduce(nodes, [], &(&2 ++ subscribe(&1))) ++
               [%Xmlel{name: "nick", children: [nick]}]
         }
 

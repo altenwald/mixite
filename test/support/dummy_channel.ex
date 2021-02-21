@@ -164,6 +164,7 @@ defmodule Mixite.DummyChannel do
 
   def config_params(_channel) do
     %{
+      "Nodes Present" => nil,
       "Messages Node Subscription" => "allowed",
       "No Private Messages" => "true",
       {"ENV", "hidden"} => "test"

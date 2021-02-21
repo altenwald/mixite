@@ -144,12 +144,6 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
                       <field var='Administrator'>
                         <value>c3b10914-905d-4920-a5cd-146a0061e478@example.com</value>
                       </field>
-                      <field var="Nodes Present">
-                        <value>participants</value>
-                        <value>information</value>
-                        <value>allowed</value>
-                        <value>banned</value>
-                      </field>
                       <field var="Participants Node Subscription">
                         <value>participants</value>
                       </field>
@@ -440,12 +434,6 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
                   <field var='Owner'>
                     <value>4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com</value>
                   </field>
-                  <field var="Nodes Present">
-                    <value>participants</value>
-                    <value>information</value>
-                    <value>allowed</value>
-                    <value>banned</value>
-                  </field>
                   <field var="Participants Node Subscription">
                     <value>participants</value>
                   </field>
@@ -518,12 +506,6 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
                   </field>
                   <field var='Administrator'>
                     <value>c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com</value>
-                  </field>
-                  <field var="Nodes Present">
-                    <value>participants</value>
-                    <value>information</value>
-                    <value>allowed</value>
-                    <value>banned</value>
                   </field>
                   <field var="Participants Node Subscription">
                     <value>participants</value>

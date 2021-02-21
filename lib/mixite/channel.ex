@@ -74,7 +74,15 @@ defmodule Mixite.Channel do
   alias Exampple.Xml.Xmlel
   alias Mixite.{Channel, Participant}
 
-  @type mix_node() :: :presence | :participants | :config | :information | :allowed | :banned | :"jidmap-visible" | :avatar
+  @type mix_node() ::
+          :presence
+          | :participants
+          | :config
+          | :information
+          | :allowed
+          | :banned
+          | :"jidmap-visible"
+          | :avatar
 
   @typedoc """
   The permission definition for messages, presence and information nodes is defined

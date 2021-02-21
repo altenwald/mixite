@@ -43,7 +43,17 @@ defmodule Mixite.Namespaces do
       end
 
       def valid_ns() do
-        [ @ns_config, @ns_messages, @ns_presence, @ns_info, @ns_participants, @ns_allowed, @ns_banned, @ns_avatar_metadata, @ns_avatar_data ]
+        [
+          @ns_config,
+          @ns_messages,
+          @ns_presence,
+          @ns_info,
+          @ns_participants,
+          @ns_allowed,
+          @ns_banned,
+          @ns_avatar_metadata,
+          @ns_avatar_data
+        ]
       end
     end
   end

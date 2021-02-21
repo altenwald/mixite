@@ -115,27 +115,40 @@ defmodule Mixite.Pubsub do
           name: "x",
           attrs: %{"xmlns" => @ns_xdata, "type" => "result"},
           children:
-            field("FORM_TYPE", "hidden", @ns_admin) ++
-              field("Last Change Made By", channel.last_change_by) ++
-              field("Owner", channel.owners) ++
-              field("Administrator", channel.administrators) ++
-              field("End of Life", channel.end_of_life) ++
-              field("Nodes Present", channel.nodes) ++
-              field("Participants Node Subscription", channel.can_subs_participants) ++
-              field("Information Node Subscription", channel.can_subs_info) ++
-              field("Allowed Node Subscription", channel.can_subs_allowed) ++
-              field("Banned Node Subscription", channel.can_subs_banned) ++
-              field("Configuration Node Access", channel.can_subs_config) ++
-              field("Information Node Update Rights", channel.can_update_info) ++
-              field("Avatar Nodes Update Rights", channel.can_update_avatar) ++
-              field("Mandatory Nicks", channel.mandatory_nicks) ++
-              Enum.map(Channel.config_params(channel), fn
-                {{key, type}, value} -> hd(field(key, type, value))
-                {key, value} -> hd(field(key, value))
-              end)
+            [
+              {{"FORM_TYPE", "hidden"}, @ns_admin},
+              {"Last Change Made By", channel.last_change_by},
+              {"Owner", channel.owners},
+              {"Administrator", channel.administrators},
+              {"End of Life", channel.end_of_life},
+              {"Nodes Present", channel.nodes},
+              {"Participants Node Subscription", channel.can_subs_participants},
+              {"Information Node Subscription", channel.can_subs_info},
+              {"Allowed Node Subscription", channel.can_subs_allowed},
+              {"Banned Node Subscription", channel.can_subs_banned},
+              {"Configuration Node Access", channel.can_subs_config},
+              {"Information Node Update Rights", channel.can_update_info},
+              {"Avatar Nodes Update Rights", channel.can_update_avatar},
+              {"Mandatory Nicks", channel.mandatory_nicks}
+            ]
+            |> merge(Enum.to_list(Channel.config_params(channel)))
+            |> Enum.flat_map(fn
+              {{key, type}, value} -> field(key, type, value)
+              {key, value} -> field(key, value)
+            end)
         }
       ]
     }
+  end
+
+  defp merge(list, []), do: list
+
+  defp merge(list, [{key, value} | list2]) do
+    if List.keymember?(list, key, 0) do
+      merge(List.keyreplace(list, key, 0, {key, value}), list2)
+    else
+      merge(list ++ [{key, value}], list2)
+    end
   end
 
   def render(channel, @ns_info, _opts) do

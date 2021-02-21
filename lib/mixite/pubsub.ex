@@ -74,6 +74,14 @@ defmodule Mixite.Pubsub do
   defp field(_name, _type, nil), do: []
   defp field(_name, _type, []), do: []
 
+  defp field(name, type, value) when is_atom(value) do
+    field(name, type, to_string(value))
+  end
+
+  defp field(name, type, value) when is_struct(value, NaiveDateTime) do
+    field(name, type, to_string(value))
+  end
+
   defp field(name, type, value) when not is_struct(value, MapSet) do
     children =
       if is_list(value) do
@@ -108,8 +116,19 @@ defmodule Mixite.Pubsub do
           attrs: %{"xmlns" => @ns_xdata, "type" => "result"},
           children:
             field("FORM_TYPE", "hidden", @ns_admin) ++
+              field("Last Change Made By", channel.last_change_by) ++
               field("Owner", channel.owners) ++
               field("Administrator", channel.administrators) ++
+              field("End of Life", channel.end_of_life) ++
+              field("Nodes Present", channel.nodes) ++
+              field("Participants Node Subscription", channel.can_subs_participants) ++
+              field("Information Node Subscription", channel.can_subs_info) ++
+              field("Allowed Node Subscription", channel.can_subs_allowed) ++
+              field("Banned Node Subscription", channel.can_subs_banned) ++
+              field("Configuration Node Access", channel.can_subs_config) ++
+              field("Information Node Update Rights", channel.can_update_info) ++
+              field("Avatar Nodes Update Rights", channel.can_update_avatar) ++
+              field("Mandatory Nicks", channel.mandatory_nicks) ++
               Enum.map(Channel.config_params(channel), fn
                 {{key, type}, value} -> hd(field(key, type, value))
                 {key, value} -> hd(field(key, value))

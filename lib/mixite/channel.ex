@@ -54,17 +54,6 @@ defmodule Mixite.Channel do
         %{}
       end
 
-      @impl Channel
-      def valid_nodes() do
-        ~w[
-          config
-          info
-          messages
-          participants
-          presence
-        ]
-      end
-
       defoverridable join: 4,
                      update_subscription: 4,
                      leave: 2,
@@ -74,8 +63,7 @@ defmodule Mixite.Channel do
                      update: 4,
                      destroy: 2,
                      config_params: 1,
-                     info_params: 1,
-                     valid_nodes: 0
+                     info_params: 1
     end
   end
 
@@ -86,7 +74,7 @@ defmodule Mixite.Channel do
   alias Exampple.Xml.Xmlel
   alias Mixite.{Channel, Participant}
 
-  @type mix_node() :: :presence | :participants | :messages | :config | :info | Atom.t()
+  @type mix_node() :: :presence | :participants | :config | :information | :allowed | :banned | :"jidmap-visible" | :avatar
 
   @typedoc """
   The permission definition for messages, presence and information nodes is defined
@@ -177,12 +165,11 @@ defmodule Mixite.Channel do
   @callback create(id(), user_jid()) :: {:ok, t()} | {:error, Atom.t()}
   @callback update(t(), t(), Map.t(), nodes()) :: {:ok, t()} | {:error, Atom.t()}
   @callback destroy(t(), user_jid()) :: :ok | {:error, Atom.t()}
-  @callback valid_nodes() :: [nodes()]
 
   defstruct id: "",
             name: "",
             description: "",
-            nodes: ~w[ presence participants messages config ]a,
+            nodes: ~w[ participants information allowed banned ]a,
             contact: MapSet.new(),
             owners: MapSet.new(),
             administrators: MapSet.new(),
@@ -815,10 +802,6 @@ defmodule Mixite.Channel do
     else
       {:error, :forbidden}
     end
-  end
-
-  def valid_nodes() do
-    backend().valid_nodes()
   end
 
   defimpl String.Chars, for: __MODULE__ do

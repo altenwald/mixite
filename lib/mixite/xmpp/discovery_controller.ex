@@ -54,10 +54,8 @@ defmodule Mixite.Xmpp.DiscoveryController do
     with channel = %Channel{} <- Channel.get(channel_id),
          true <- Channel.can_view?(channel, @ns_info, from_jid) do
       items =
-        for node <- channel.nodes do
-          node = "urn:xmpp:mix:nodes:#{node}"
-          "<item jid='#{channel_id}@#{conn.domain}' node='#{node}'/>"
-        end
+        ["messages", "config" | channel.nodes]
+        |> Enum.reduce([], & &2 ++ node_to_ns(&1))
 
       payload = ~x[
         <query xmlns='http://jabber.org/protocol/disco#items' node='mix'>

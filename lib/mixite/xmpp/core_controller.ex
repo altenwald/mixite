@@ -18,8 +18,6 @@ defmodule Mixite.Xmpp.CoreController do
   alias Exampple.Xmpp.Jid
   alias Mixite.{Channel, EventManager}
 
-  @prefix_ns "urn:xmpp:mix:nodes:"
-
   if Application.get_env(:mixite, :create_channel, true) do
     def core(%Conn{to_jid: %Jid{node: ""}} = conn, [%Xmlel{name: "create"} = query]) do
       user_jid = Jid.to_bare(conn.from_jid)
@@ -143,17 +141,23 @@ defmodule Mixite.Xmpp.CoreController do
 
   defp update(conn, query, channel) do
     user_jid = Jid.to_bare(conn.from_jid)
+    valid_ns = valid_ns()
 
-    nodes_add = for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["subscribe"], do: node
+    nodes_add =
+      for %Xmlel{attrs: %{"node" => ns_node}} <- query["subscribe"], ns_node in valid_ns do
+        ns_to_node(ns_node)
+      end
 
     nodes_rem =
-      for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["unsubscribe"], do: node
+      for %Xmlel{attrs: %{"node" => ns_node}} <- query["unsubscribe"], ns_node in valid_ns do
+        ns_to_node(ns_node)
+      end
 
     case Channel.update_subscription(channel, user_jid, nodes_add, nodes_rem) do
       {:ok, {_channel, add_nodes, rem_nodes}} ->
         from_jid = Jid.to_bare(conn.from_jid)
-        add_nodes = for node <- add_nodes, do: subscribe(node)
-        rem_nodes = for node <- rem_nodes, do: unsubscribe(node)
+        add_nodes = Enum.reduce(add_nodes, [], & &2 ++ subscribe(&1))
+        rem_nodes = Enum.reduce(rem_nodes, [], & &2 ++ unsubscribe(&1))
 
         payload = %Xmlel{
           name: "update-subscription",
@@ -180,6 +184,7 @@ defmodule Mixite.Xmpp.CoreController do
 
   defp join(conn, query, channel) do
     user_jid = Jid.to_bare(conn.from_jid)
+    valid_ns = valid_ns()
 
     nick =
       case query["nick"] do
@@ -187,7 +192,10 @@ defmodule Mixite.Xmpp.CoreController do
         _ -> nil
       end
 
-    nodes_in = for %Xmlel{attrs: %{"node" => @prefix_ns <> node}} <- query["subscribe"], do: node
+    nodes_in =
+      for %Xmlel{attrs: %{"node" => ns_node}} <- query["subscribe"], ns_node in valid_ns do
+        ns_to_node(ns_node)
+      end
 
     case Channel.join(channel, user_jid, nick, nodes_in) do
       {:error, :not_implemented} ->
@@ -207,7 +215,7 @@ defmodule Mixite.Xmpp.CoreController do
           name: "join",
           attrs: %{"xmlns" => @ns_core, "id" => participant.id},
           children:
-            for(node <- nodes, do: subscribe(node)) ++
+            Enum.reduce(nodes, [], & &2 ++ subscribe(&1)) ++
               [%Xmlel{name: "nick", children: [nick]}]
         }
 
@@ -221,12 +229,14 @@ defmodule Mixite.Xmpp.CoreController do
   end
 
   defp unsubscribe(node) do
-    full_node_name = "#{@prefix_ns}#{node}"
-    %Xmlel{name: "unsubscribe", attrs: %{"node" => full_node_name}}
+    for full_node_name <- node_to_ns(node) do
+      %Xmlel{name: "unsubscribe", attrs: %{"node" => full_node_name}}
+    end
   end
 
   defp subscribe(node) do
-    full_node_name = "#{@prefix_ns}#{node}"
-    %Xmlel{name: "subscribe", attrs: %{"node" => full_node_name}}
+    for full_node_name <- node_to_ns(node) do
+      %Xmlel{name: "subscribe", attrs: %{"node" => full_node_name}}
+    end
   end
 end

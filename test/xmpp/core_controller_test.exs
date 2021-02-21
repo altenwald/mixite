@@ -165,8 +165,6 @@ defmodule Mixite.Xmpp.CoreControllerTest do
             from='8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com/hectic'
             id='44'>
           <update-subscription xmlns='urn:xmpp:mix:core:1'>
-            <subscribe node='urn:xmpp:mix:nodes:messages'/>
-            <unsubscribe node='urn:xmpp:mix:nodes:presence'/>
             <subscribe node='urn:xmpp:mix:nodes:participants'/>
             <unsubscribe node='urn:xmpp:mix:nodes:info'/>
           </update-subscription>
@@ -180,7 +178,7 @@ defmodule Mixite.Xmpp.CoreControllerTest do
             id='44'>
           <update-subscription xmlns='urn:xmpp:mix:core:1'
                 jid='8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com'>
-            <unsubscribe node='urn:xmpp:mix:nodes:presence'/>
+            <unsubscribe node='urn:xmpp:mix:nodes:info'/>
           </update-subscription>
         </iq>
       ])

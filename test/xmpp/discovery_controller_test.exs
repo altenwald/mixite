@@ -125,13 +125,17 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
             from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'>
           <query xmlns='http://jabber.org/protocol/disco#items' node='mix'>
             <item jid='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
-                  node='urn:xmpp:mix:nodes:config'/>
-            <item jid='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
                   node='urn:xmpp:mix:nodes:messages'/>
+            <item jid='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+                  node='urn:xmpp:mix:nodes:config'/>
             <item jid='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
                   node='urn:xmpp:mix:nodes:participants'/>
             <item jid='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
-                  node='urn:xmpp:mix:nodes:presence'/>
+                  node='urn:xmpp:mix:nodes:info'/>
+            <item jid='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+                  node='urn:xmpp:mix:nodes:allowed'/>
+            <item jid='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+                  node='urn:xmpp:mix:nodes:banned'/>
           </query>
         </iq>
       ])

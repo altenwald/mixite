@@ -144,6 +144,36 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
                       <field var='Administrator'>
                         <value>c3b10914-905d-4920-a5cd-146a0061e478@example.com</value>
                       </field>
+                      <field var="Nodes Present">
+                        <value>participants</value>
+                        <value>information</value>
+                        <value>allowed</value>
+                        <value>banned</value>
+                      </field>
+                      <field var="Participants Node Subscription">
+                        <value>participants</value>
+                      </field>
+                      <field var="Information Node Subscription">
+                        <value>participants</value>
+                      </field>
+                      <field var="Allowed Node Subscription">
+                        <value>administrators</value>
+                      </field>
+                      <field var="Banned Node Subscription">
+                        <value>administrators</value>
+                      </field>
+                      <field var="Configuration Node Access">
+                        <value>participants</value>
+                      </field>
+                      <field var="Information Node Update Rights">
+                        <value>owners</value>
+                      </field>
+                      <field var="Avatar Nodes Update Rights">
+                        <value>admins</value>
+                      </field>
+                      <field var="Mandatory Nicks">
+                        <value>true</value>
+                      </field>
                       <field type="hidden" var="ENV">
                         <value>test</value>
                       </field>
@@ -410,6 +440,36 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
                   <field var='Owner'>
                     <value>4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com</value>
                   </field>
+                  <field var="Nodes Present">
+                    <value>participants</value>
+                    <value>information</value>
+                    <value>allowed</value>
+                    <value>banned</value>
+                  </field>
+                  <field var="Participants Node Subscription">
+                    <value>participants</value>
+                  </field>
+                  <field var="Information Node Subscription">
+                    <value>participants</value>
+                  </field>
+                  <field var="Allowed Node Subscription">
+                    <value>administrators</value>
+                  </field>
+                  <field var="Banned Node Subscription">
+                    <value>administrators</value>
+                  </field>
+                  <field var="Configuration Node Access">
+                    <value>participants</value>
+                  </field>
+                  <field var="Information Node Update Rights">
+                    <value>owners</value>
+                  </field>
+                  <field var="Avatar Nodes Update Rights">
+                    <value>admins</value>
+                  </field>
+                  <field var="Mandatory Nicks">
+                    <value>true</value>
+                  </field>
                   <field var='ENV' type='hidden'>
                     <value>test</value>
                   </field>
@@ -458,6 +518,36 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
                   </field>
                   <field var='Administrator'>
                     <value>c97de5c2-76ed-448d-bff9-ac4f9f32a327@example.com</value>
+                  </field>
+                  <field var="Nodes Present">
+                    <value>participants</value>
+                    <value>information</value>
+                    <value>allowed</value>
+                    <value>banned</value>
+                  </field>
+                  <field var="Participants Node Subscription">
+                    <value>participants</value>
+                  </field>
+                  <field var="Information Node Subscription">
+                    <value>participants</value>
+                  </field>
+                  <field var="Allowed Node Subscription">
+                    <value>administrators</value>
+                  </field>
+                  <field var="Banned Node Subscription">
+                    <value>administrators</value>
+                  </field>
+                  <field var="Configuration Node Access">
+                    <value>owners</value>
+                  </field>
+                  <field var="Information Node Update Rights">
+                    <value>admins</value>
+                  </field>
+                  <field var="Avatar Nodes Update Rights">
+                    <value>admins</value>
+                  </field>
+                  <field var="Mandatory Nicks">
+                    <value>true</value>
                   </field>
                   <field var='ENV' type='hidden'>
                     <value>test</value>

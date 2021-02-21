@@ -7,10 +7,10 @@ defmodule Mixite.DummyChannel do
   alias Exampple.Xml.Xmlel
 
   @nodes ~w[
-    config
-    messages
     participants
-    presence
+    information
+    allowed
+    banned
   ]
   @data %{
     "be89d464-87d1-4351-bdff-a2cdd7bdb975" => %Channel{

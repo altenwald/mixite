@@ -14,7 +14,8 @@ defmodule Mixite.Namespaces do
       @ns_participants "urn:xmpp:mix:nodes:participants"
       @ns_allowed "urn:xmpp:mix:nodes:allowed"
       @ns_banned "urn:xmpp:mix:nodes:banned"
-      @ns_avatar "urn:xmpp:mix:nodes:avatar"
+      @ns_avatar_metadata "urn:xmpp:avatar:metadata"
+      @ns_avatar_data "urn:xmpp:avatar:data"
     end
   end
 end

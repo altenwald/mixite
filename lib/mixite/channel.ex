@@ -488,15 +488,27 @@ defmodule Mixite.Channel do
     is_owner?(channel, jid)
   end
 
-  def can_view?(%Channel{can_update_avatar: :participants} = channel, @ns_avatar, jid) do
+  def can_view?(%Channel{can_update_avatar: :participants} = channel, @ns_avatar_data, jid) do
     is_participant?(channel, jid)
   end
 
-  def can_view?(%Channel{can_update_avatar: :admins} = channel, @ns_avatar, jid) do
+  def can_view?(%Channel{can_update_avatar: :admins} = channel, @ns_avatar_data, jid) do
     is_administrator?(channel, jid)
   end
 
-  def can_view?(%Channel{can_update_avatar: :owners} = channel, @ns_avatar, jid) do
+  def can_view?(%Channel{can_update_avatar: :owners} = channel, @ns_avatar_data, jid) do
+    is_owner?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_update_avatar: :participants} = channel, @ns_avatar_metadata, jid) do
+    is_participant?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_update_avatar: :admins} = channel, @ns_avatar_metadata, jid) do
+    is_administrator?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_update_avatar: :owners} = channel, @ns_avatar_metadata, jid) do
     is_owner?(channel, jid)
   end
 

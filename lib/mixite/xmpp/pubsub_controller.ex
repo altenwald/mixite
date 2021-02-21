@@ -88,7 +88,7 @@ defmodule Mixite.Xmpp.PubsubController do
 
   def process_get_node(channel_id, from_jid, @ns_config) when channel_id != "" do
     with channel = %Channel{} <- Channel.get(channel_id),
-         true <- Channel.can_view?(channel, from_jid) do
+         true <- Channel.can_view?(channel, @ns_config, from_jid) do
       {:ok, Pubsub.render(channel, @ns_config)}
     else
       nil -> nil
@@ -98,7 +98,7 @@ defmodule Mixite.Xmpp.PubsubController do
 
   def process_get_node(channel_id, from_jid, @ns_info) when channel_id != "" do
     with channel = %Channel{} <- Channel.get(channel_id),
-         true <- Channel.can_view?(channel, from_jid) do
+         true <- Channel.can_view?(channel, @ns_info, from_jid) do
       {:ok, Pubsub.render(channel, @ns_info)}
     else
       nil -> nil
@@ -109,7 +109,7 @@ defmodule Mixite.Xmpp.PubsubController do
   def process_get_node(channel_id, from_jid, node)
       when channel_id != "" and node in [@ns_participants, @ns_allowed, @ns_banned] do
     with channel = %Channel{} <- Channel.get(channel_id),
-         true <- Channel.can_view?(channel, from_jid) do
+         true <- Channel.can_view?(channel, node, from_jid) do
       {:ok, Pubsub.render(channel, node)}
     else
       nil -> nil

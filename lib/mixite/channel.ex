@@ -88,6 +88,33 @@ defmodule Mixite.Channel do
 
   @type mix_node() :: :presence | :participants | :messages | :config | :info | Atom.t()
 
+  @typedoc """
+  The permission definition for messages, presence and information nodes is defined
+  for this type.
+  """
+  @type msg_permission() :: :participants | :allowed | :anyone
+
+  @typedoc """
+  The permission definition for participants node is defined for this type.
+  """
+  @type participants_permission() ::
+          :participants | :allowed | :anyone | :nobody | :admins | :owners
+
+  @typedoc """
+  The permission definition for config, allowed and banned nodes is defined for this type.
+  """
+  @type admins_permission() :: :participants | :allowed | :nobody | :admins | :owners
+
+  @typedoc """
+  The permission definition for update nodes.
+  """
+  @type update_permission() :: :participants | :admins | :owners
+
+  @typedoc """
+  The strict permission is only to give administrators permissions which are only for owners.
+  """
+  @type strict_permission() :: :admins | :owners
+
   @type t() :: %__MODULE__{
           id: String.t(),
           name: String.t(),
@@ -99,6 +126,18 @@ defmodule Mixite.Channel do
           participants: [Participant.t()],
           allowed: MapSet.t(user_jid()),
           banned: MapSet.t(user_jid()),
+          can_subs_participants: participants_permission(),
+          can_subs_info: msg_permission(),
+          can_subs_allowed: admins_permission(),
+          can_subs_banned: admins_permission(),
+          can_subs_config: admins_permission(),
+          can_subs_avatar: msg_permission(),
+          can_update_info: update_permission(),
+          can_update_config: strict_permission(),
+          can_update_avatar: update_permission(),
+          last_change_by: String.t() | nil,
+          end_of_life: NaiveDateTime.t() | nil,
+          mandatory_nicks: boolean(),
           updated_at: NaiveDateTime.t(),
           inserted_at: NaiveDateTime.t()
         }
@@ -150,6 +189,18 @@ defmodule Mixite.Channel do
             participants: [],
             allowed: MapSet.new(),
             banned: MapSet.new(),
+            can_subs_participants: :participants,
+            can_subs_info: :participants,
+            can_subs_allowed: :administrators,
+            can_subs_banned: :administrators,
+            can_subs_config: :owners,
+            can_subs_avatar: :participants,
+            can_update_info: :admins,
+            can_update_config: :owners,
+            can_update_avatar: :admins,
+            last_change_by: nil,
+            end_of_life: nil,
+            mandatory_nicks: true,
             updated_at: NaiveDateTime.utc_now(),
             inserted_at: NaiveDateTime.utc_now()
 
@@ -342,7 +393,7 @@ defmodule Mixite.Channel do
       iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
       iex> participants = [p1, p2, p3]
       iex> %Mixite.Channel{participants: participants}
-      iex> |> Mixite.Channel.can_view?("user3@example.com")
+      iex> |> Mixite.Channel.can_view?("urn:xmpp:mix:nodes:info", "user3@example.com")
       true
 
       iex> p1 = %Mixite.Participant{jid: "user1@example.com"}
@@ -350,12 +401,91 @@ defmodule Mixite.Channel do
       iex> p3 = %Mixite.Participant{jid: "user3@example.com"}
       iex> participants = [p1, p2, p3]
       iex> %Mixite.Channel{participants: participants}
-      iex> |> Mixite.Channel.can_view?("user4@example.com")
+      iex> |> Mixite.Channel.can_view?("urn:xmpp:mix:nodes:info", "user4@example.com")
       false
   """
-  @spec can_view?(t(), user_jid()) :: boolean()
-  def can_view?(channel, jid) do
-    is_participant_or_owner?(channel, jid) or is_administrator?(channel, jid)
+  @spec can_view?(t(), nodes(), user_jid()) :: boolean()
+  def can_view?(%Channel{can_subs_participants: :nobody}, @ns_participants, _jid), do: false
+  def can_view?(%Channel{can_subs_participants: :anyone}, @ns_participants, _jid), do: true
+
+  def can_view?(%Channel{can_subs_participants: :allowed} = channel, @ns_participants, jid) do
+    is_allowed?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_participants: :participants} = channel, @ns_participants, jid) do
+    is_participant?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_participants: :admins} = channel, @ns_participants, jid) do
+    is_administrator?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_participants: :owners} = channel, @ns_participants, jid) do
+    is_owner?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_info: :anyone}, @ns_info, _jid), do: true
+
+  def can_view?(%Channel{can_subs_info: :allowed} = channel, @ns_info, jid) do
+    is_allowed?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_info: :participants} = channel, @ns_info, jid) do
+    is_participant?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_allowed: :nobody}, @ns_allowed, _jid), do: false
+
+  def can_view?(%Channel{can_subs_allowed: :allowed} = channel, @ns_allowed, jid) do
+    is_allowed?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_allowed: :participants} = channel, @ns_allowed, jid) do
+    is_participant?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_allowed: :admins} = channel, @ns_allowed, jid) do
+    is_administrator?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_allowed: :owners} = channel, @ns_allowed, jid) do
+    is_owner?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_banned: :nobody}, @ns_banned, _jid), do: false
+
+  def can_view?(%Channel{can_subs_banned: :allowed} = channel, @ns_banned, jid) do
+    is_allowed?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_banned: :participants} = channel, @ns_banned, jid) do
+    is_participant?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_banned: :admins} = channel, @ns_banned, jid) do
+    is_administrator?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_banned: :owners} = channel, @ns_banned, jid) do
+    is_owner?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_config: :nobody}, @ns_config, _jid), do: false
+
+  def can_view?(%Channel{can_subs_config: :allowed} = channel, @ns_config, jid) do
+    is_allowed?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_config: :participants} = channel, @ns_config, jid) do
+    is_participant?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_config: :admins} = channel, @ns_config, jid) do
+    is_administrator?(channel, jid)
+  end
+
+  def can_view?(%Channel{can_subs_config: :owners} = channel, @ns_config, jid) do
+    is_owner?(channel, jid)
   end
 
   @doc """
@@ -367,7 +497,7 @@ defmodule Mixite.Channel do
       iex> p3 = "user3@example.com"
       iex> admins = MapSet.new([p1, p2, p3])
       iex> %Mixite.Channel{administrators: admins}
-      iex> |> Mixite.Channel.can_modify?("user3@example.com")
+      iex> |> Mixite.Channel.can_modify?("urn:xmpp:mix:nodes:info", "user3@example.com")
       true
 
       iex> p1 = "user1@example.com"
@@ -375,11 +505,39 @@ defmodule Mixite.Channel do
       iex> p3 = "user3@example.com"
       iex> admins = MapSet.new([p1, p2, p3])
       iex> %Mixite.Channel{administrators: admins}
-      iex> |> Mixite.Channel.can_modify?("user4@example.com")
+      iex> |> Mixite.Channel.can_modify?("urn:xmpp:mix:nodes:info", "user4@example.com")
       false
   """
-  @spec can_modify?(t(), user_jid()) :: boolean()
-  def can_modify?(channel, jid) do
+  @spec can_modify?(t(), nodes(), user_jid()) :: boolean()
+  def can_modify?(%Channel{can_update_info: :participants} = channel, @ns_info, jid) do
+    is_participant?(channel, jid)
+  end
+
+  def can_modify?(%Channel{can_update_info: :admins} = channel, @ns_info, jid) do
+    is_administrator?(channel, jid)
+  end
+
+  def can_modify?(%Channel{can_update_info: :owners} = channel, @ns_info, jid) do
+    is_owner?(channel, jid)
+  end
+
+  def can_modify?(%Channel{can_update_avatar: :participants} = channel, @ns_avatar, jid) do
+    is_participant?(channel, jid)
+  end
+
+  def can_modify?(%Channel{can_update_avatar: :admins} = channel, @ns_avatar, jid) do
+    is_administrator?(channel, jid)
+  end
+
+  def can_modify?(%Channel{can_update_avatar: :owners} = channel, @ns_avatar, jid) do
+    is_owner?(channel, jid)
+  end
+
+  def can_modify?(channel, @ns_config, jid) do
+    is_owner?(channel, jid)
+  end
+
+  def can_modify?(channel, ns, jid) when ns in [@ns_allowed, @ns_banned, @ns_participants] do
     is_administrator_or_owner?(channel, jid)
   end
 
@@ -551,7 +709,7 @@ defmodule Mixite.Channel do
   @spec update(t(), user_jid(), Map.t(), nodes()) ::
           {:ok, t()} | {:ok, t(), action(), [user_jid()]} | {:error, Atom.t()}
   def update(channel, user_jid, params, ns_node) do
-    if can_modify?(channel, user_jid) do
+    if can_modify?(channel, ns_node, user_jid) do
       case {ns_node, params["action"]} do
         {@ns_info, nil} ->
           new_channel =

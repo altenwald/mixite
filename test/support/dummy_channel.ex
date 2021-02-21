@@ -40,6 +40,8 @@ defmodule Mixite.DummyChannel do
           nodes: @nodes
         }
       ],
+      can_subs_config: :participants,
+      can_update_info: :owners,
       updated_at: ~N[2020-09-23 00:36:20],
       inserted_at: ~N[2020-09-23 00:36:20]
     },

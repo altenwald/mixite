@@ -85,33 +85,6 @@ defmodule Exampple.Xmpp.DiscoveryControllerTest do
       refute_receive _, 200
     end
 
-    test "disco#info from a not belonging channel" do
-      user = "user-id@example.com/res"
-
-      component_received(~x[
-        <iq type='get'
-            id='1'
-            to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
-            from='#{user}'>
-          <query xmlns='http://jabber.org/protocol/disco#info'/>
-        </iq>
-      ])
-
-      assert_stanza_receive(~x[
-        <iq type='error' id='1' to='#{user}' from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'>
-          <query xmlns='http://jabber.org/protocol/disco#info'/>
-          <error type='auth'>
-            <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-            <text lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
-              forbidden access to channel
-            </text>
-          </error>
-        </iq>
-      ])
-
-      refute_receive _, 200
-    end
-
     test "disco#items general" do
       user = "8852aa0b-b9bd-4427-aa30-9b9b4f1b0ea9@example.com/res"
       component_received(~x[

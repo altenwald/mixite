@@ -4,8 +4,6 @@ defmodule Mixite.Broadcast do
   alias Exampple.Xmpp.Stanza
   alias Mixite.{Channel, Participant}
 
-  import Exampple.Xml.Xmlel, only: [sigil_x: 2]
-
   defmacro __using__(_params) do
     quote do
       @behaviour Mixite.Broadcast
@@ -20,7 +18,13 @@ defmodule Mixite.Broadcast do
     end
   end
 
-  @callback extra_payload(Channel.t(), Channel.user_jid(), Channel.user_jid(), [Xmlel.t()], Keyword.t()) :: [Xmlel.t()]
+  @callback extra_payload(
+              Channel.t(),
+              Channel.user_jid(),
+              Channel.user_jid(),
+              [Xmlel.t()],
+              Keyword.t()
+            ) :: [Xmlel.t()]
 
   @doc """
   Get the backend implementation for Mixite.
@@ -39,7 +43,13 @@ defmodule Mixite.Broadcast do
     end
   end
 
-  @spec maybe_extra_payload(Channel.t(), Channel.user_jid(), Channel.user_jid(), [Xmlel.t()], Keyword.t()) :: [Xmlel.t()] | :drop
+  @spec maybe_extra_payload(
+          Channel.t(),
+          Channel.user_jid(),
+          Channel.user_jid(),
+          [Xmlel.t()],
+          Keyword.t()
+        ) :: [Xmlel.t()] | :drop
   defp maybe_extra_payload(channel, user_jid, from_jid, payload, opts) do
     backend().extra_payload(channel, user_jid, from_jid, payload, opts)
   end
@@ -49,6 +59,7 @@ defmodule Mixite.Broadcast do
     type = opts[:type]
 
     message_id = Channel.gen_uuid()
+
     case maybe_extra_payload(channel, user_jid, from_jid, payload, opts) do
       :drop ->
         :ok

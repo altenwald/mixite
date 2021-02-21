@@ -1,5 +1,6 @@
 defmodule Mixite.Xmpp.DiscoveryController do
   use Exampple.Component
+  use Mixite.Namespaces
 
   import Exampple.Xml.Xmlel, only: [sigil_x: 2]
   import Mixite.Xmpp.ErrorController, only: [send_not_found: 1, send_forbidden: 1]
@@ -9,10 +10,7 @@ defmodule Mixite.Xmpp.DiscoveryController do
   alias Mixite.Channel
 
   def info(%Conn{to_jid: %Jid{node: channel_id}} = conn, _query) when channel_id != "" do
-    from_jid = Jid.to_bare(conn.from_jid)
-
-    with channel = %Channel{} <- Channel.get(channel_id),
-         true <- Channel.can_view?(channel, from_jid) do
+    if channel = Channel.get(channel_id) do
       payload = ~x[
         <query xmlns='http://jabber.org/protocol/disco#info'>
           <identity category='conference' type='mix' name='#{channel.name}'/>
@@ -26,8 +24,7 @@ defmodule Mixite.Xmpp.DiscoveryController do
       |> iq_resp([payload])
       |> send()
     else
-      nil -> send_not_found(conn)
-      false -> send_forbidden(conn)
+      send_not_found(conn)
     end
   end
 
@@ -55,7 +52,7 @@ defmodule Mixite.Xmpp.DiscoveryController do
     from_jid = Jid.to_bare(conn.from_jid)
 
     with channel = %Channel{} <- Channel.get(channel_id),
-         true <- Channel.can_view?(channel, from_jid) do
+         true <- Channel.can_view?(channel, @ns_info, from_jid) do
       items =
         for node <- channel.nodes do
           node = "urn:xmpp:mix:nodes:#{node}"

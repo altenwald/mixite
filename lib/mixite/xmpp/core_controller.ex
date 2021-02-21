@@ -197,6 +197,8 @@ defmodule Mixite.Xmpp.CoreController do
         ns_to_node(ns_node)
       end
 
+    Logger.debug("subscribing nodes in join: #{inspect(nodes_in)}")
+
     case Channel.join(channel, user_jid, nick, nodes_in) do
       {:error, :not_implemented} ->
         Logger.error("join feature not implemented")
@@ -211,6 +213,7 @@ defmodule Mixite.Xmpp.CoreController do
         send_internal_error(conn)
 
       {:ok, {participant, nodes}} ->
+        Logger.debug("subscribe nodes in join: #{inspect(nodes)}")
         payload = %Xmlel{
           name: "join",
           attrs: %{"xmlns" => @ns_core, "id" => participant.id},

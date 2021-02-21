@@ -44,6 +44,7 @@ defmodule Mixite.Listener.Message do
 
   def handle_events([{:join, id, from_jid, user_jid, nick, channel}], _from, state) do
     channel = %Channel{
+      channel |
       participants: [%Participant{id: id, jid: user_jid, nick: nick} | channel.participants]
     }
 

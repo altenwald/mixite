@@ -499,9 +499,8 @@ defmodule Mixite.Xmpp.CoreControllerTest do
             id='44'>
           <join xmlns='urn:xmpp:mix:core:1'
                 id='92cd9729-7755-4d41-a09b-7105c005aae2'>
-            <subscribe node='urn:xmpp:mix:nodes:messages'/>
+            <subscribe node='urn:xmpp:mix:nodes:info'/>
             <subscribe node='urn:xmpp:mix:nodes:participants'/>
-            <subscribe node='urn:xmpp:mix:nodes:presence'/>
             <nick>third witch</nick>
           </join>
         </iq>

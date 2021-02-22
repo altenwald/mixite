@@ -215,6 +215,7 @@ defmodule Mixite.Pubsub do
   end
 
   def get_value(%Xmlel{children: [value]}), do: value
+  def get_value(%Xmlel{children: []}), do: ""
 
   def process_info(%Xmlel{
         name: "publish",

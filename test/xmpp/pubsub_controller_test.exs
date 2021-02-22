@@ -79,6 +79,78 @@ defmodule Mixite.Xmpp.PubsubControllerTest do
       refute_receive _, 200
     end
 
+    test "nodes:info set for a channel remove description" do
+      component_received(~x[
+        <iq from='4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com/UUID-c8y/1573'
+            id='111'
+            to='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            type='set'>
+          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+            <publish node='urn:xmpp:mix:nodes:info'>
+              <item>
+                <x xmlns='jabber:x:data' type='submit'>
+                  <field var='FORM_TYPE' type='hidden'>
+                    <value>urn:xmpp:mix:core:1</value>
+                  </field>
+                  <field var='Description'>
+                    <value/>
+                  </field>
+                </x>
+              </item>
+            </publish>
+          </pubsub>
+        </iq>
+      ])
+
+      assert_stanza_receive(~x[
+        <iq from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+            id='111'
+            to='4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com/UUID-c8y/1573'
+            type='result'>
+          <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+            <publish node='urn:xmpp:mix:nodes:info'>
+              <item id='2020-09-23T00:36:20Z' xmlns='urn:xmpp:mix:core:1'/>
+            </publish>
+          </pubsub>
+        </iq>
+      ])
+
+      channel = Mixite.Channel.get("be89d464-87d1-4351-bdff-a2cdd7bdb975")
+
+      assert_all_stanza_receive(
+        for participant <- channel.participants do
+          ~x[
+            <message from='be89d464-87d1-4351-bdff-a2cdd7bdb975@mixite.example.com'
+                     id='uuid'
+                     to='#{participant.jid}'>
+              <event xmlns='http://jabber.org/protocol/pubsub#event'>
+                <items node='urn:xmpp:mix:nodes:info'>
+                  <item id='2020-09-23T00:36:20Z'>
+                    <x xmlns='jabber:x:data' type='result'>
+                      <field var='FORM_TYPE' type='hidden'>
+                        <value>urn:xmpp:mix:core:1</value>
+                      </field>
+                      <field var='Name'>
+                        <value>pennsylvania</value>
+                      </field>
+                      <field var='Description'>
+                        <value/>
+                      </field>
+                      <field var='Created At'>
+                        <value>2020-09-23T00:36:20Z</value>
+                      </field>
+                    </x>
+                  </item>
+                </items>
+              </event>
+            </message>
+          ]
+        end
+      )
+
+      refute_receive _, 200
+    end
+
     test "nodes:config set for a channel" do
       component_received(~x[
         <iq from='4b2f6c32-fa80-4d97-aeec-db8e043507fe@example.com/UUID-c8y/1573'

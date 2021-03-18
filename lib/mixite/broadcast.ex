@@ -56,6 +56,7 @@ defmodule Mixite.Broadcast do
 
   def send(%Channel{} = channel, user_jid, payload, from_jid, opts \\ []) do
     ignore_jids = opts[:ignore_jids] || []
+
     type =
       case opts[:type] do
         "normal" -> nil

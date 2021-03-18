@@ -150,17 +150,17 @@ defmodule Mixite.Pubsub do
           name: "x",
           attrs: %{"xmlns" => @ns_xdata, "type" => "result"},
           children:
-              [
-                {{"FORM_TYPE", "hidden"}, @ns_core},
-                {"Name", channel.name},
-                {"Description", channel.description},
-                {"Contact", channel.contact}
-              ]
-              |> merge(Enum.to_list(Channel.info_params(channel)))
-              |> Enum.flat_map(fn
-                {{key, type}, value} -> field(key, type, value)
-                {key, value} -> field(key, value)
-              end)
+            [
+              {{"FORM_TYPE", "hidden"}, @ns_core},
+              {"Name", channel.name},
+              {"Description", channel.description},
+              {"Contact", channel.contact}
+            ]
+            |> merge(Enum.to_list(Channel.info_params(channel)))
+            |> Enum.flat_map(fn
+              {{key, type}, value} -> field(key, type, value)
+              {key, value} -> field(key, value)
+            end)
         }
       ]
     }

@@ -193,6 +193,42 @@ defmodule Mixite.Xmpp.MessageControllerTest do
       refute_receive _, 200
     end
 
+    test "correctly without type" do
+      component_received(~x[
+        <message
+            to='c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com'
+            from='2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com/hectic'
+            id='disable-store'>
+          <paused xmlns='http://jabber.org/protocol/chatstates'/>
+        </message>
+      ])
+
+      to_jids = [
+        "2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com",
+        "f8e744de-3d1b-4528-9cfd-3fa111f7f626@example.com",
+        "e784345c-4bed-4ce0-9610-e6f57b9ac6f2@example.com"
+      ]
+
+      stanzas =
+        for to_jid <- to_jids do
+          ~x[
+          <message from="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
+                   id="uuid"
+                   to="#{to_jid}">
+            <paused xmlns='http://jabber.org/protocol/chatstates'/>
+            <mix xmlns="urn:xmpp:mix:core:1">
+              <nick>kathleen-booth</nick>
+              <jid>2f540478-fe93-469c-8b9c-7e4ad8fd4339@example.com</jid>
+            </mix>
+          </message>
+        ]
+        end
+
+      assert_all_stanza_receive(stanzas)
+
+      refute_receive _, 200
+    end
+
     test "correctly with more complete payload" do
       component_received(~x[
         <message type='groupchat'

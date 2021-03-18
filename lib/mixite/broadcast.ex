@@ -56,7 +56,11 @@ defmodule Mixite.Broadcast do
 
   def send(%Channel{} = channel, user_jid, payload, from_jid, opts \\ []) do
     ignore_jids = opts[:ignore_jids] || []
-    type = opts[:type]
+    type =
+      case opts[:type] do
+        "normal" -> nil
+        type -> type
+      end
 
     message_id = Channel.gen_uuid()
 

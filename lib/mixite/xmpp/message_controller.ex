@@ -15,9 +15,9 @@ defmodule Mixite.Xmpp.MessageController do
   alias Exampple.Xmpp.Jid
   alias Mixite.{Broadcast, Channel}
 
-  defp send_broadcast(conn, channel, user_jid, payload) do
+  defp send_broadcast(conn, channel, user_jid, payload, type) do
     from_jid = Jid.to_bare(conn.to_jid)
-    Broadcast.send(channel, user_jid, payload, from_jid, type: "groupchat")
+    Broadcast.send(channel, user_jid, payload, from_jid, type: type)
   end
 
   def broadcast(%Conn{to_jid: %Jid{node: ""}} = conn, _query) do
@@ -62,7 +62,7 @@ defmodule Mixite.Xmpp.MessageController do
             )
 
           {:ok, nil} ->
-            send_broadcast(conn, channel, user_jid, payload)
+            send_broadcast(conn, channel, user_jid, payload, conn.type)
 
           {:ok, sid} when is_binary(sid) ->
             sid_tag = %Xmlel{
@@ -75,7 +75,7 @@ defmodule Mixite.Xmpp.MessageController do
             }
 
             payload = payload ++ [sid_tag]
-            send_broadcast(conn, channel, user_jid, payload)
+            send_broadcast(conn, channel, user_jid, payload, conn.type)
         end
       else
         send_forbidden(conn)

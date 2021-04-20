@@ -14,7 +14,12 @@ defmodule Mixite.Broadcast do
         payload
       end
 
-      defoverridable extra_payload: 5
+      @impl Broadcast
+      def filter(message, _channel, _user_jid, _jid, _opts) do
+        message
+      end
+
+      defoverridable extra_payload: 5, filter: 5
     end
   end
 
@@ -54,6 +59,13 @@ defmodule Mixite.Broadcast do
     backend().extra_payload(channel, user_jid, from_jid, payload, opts)
   end
 
+  defp maybe_send(message, channel, user_jid, jid, opts) do
+    case backend().filter(message, channel, user_jid, jid, opts) do
+      :drop -> :ok
+      message -> Component.send(message)
+    end
+  end
+
   def send(%Channel{} = channel, user_jid, payload, from_jid, opts \\ []) do
     ignore_jids = opts[:ignore_jids] || []
 
@@ -75,7 +87,7 @@ defmodule Mixite.Broadcast do
         |> Enum.each(fn %Participant{jid: jid} ->
           payload
           |> Stanza.message(from_jid, message_id, jid, type)
-          |> Component.send()
+          |> maybe_send(channel, user_jid, jid, opts)
         end)
     end
   end

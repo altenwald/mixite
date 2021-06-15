@@ -136,7 +136,7 @@ defmodule Mixite.Xmpp.MessageControllerTest do
         for to_jid <- to_jids do
           ~x[
           <message from="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
-                   id="uuid"
+                   id="80"
                    to="#{to_jid}"
                    type="groupchat">
             <body>Hello world!</body>
@@ -176,7 +176,7 @@ defmodule Mixite.Xmpp.MessageControllerTest do
         for to_jid <- to_jids do
           ~x[
           <message from="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
-                   id="uuid"
+                   id="disable-store"
                    to="#{to_jid}"
                    type="groupchat">
             <body>Hello world!</body>
@@ -213,7 +213,7 @@ defmodule Mixite.Xmpp.MessageControllerTest do
         for to_jid <- to_jids do
           ~x[
           <message from="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
-                   id="uuid"
+                   id="disable-store"
                    to="#{to_jid}">
             <paused xmlns='http://jabber.org/protocol/chatstates'/>
             <mix xmlns="urn:xmpp:mix:core:1">
@@ -251,7 +251,7 @@ defmodule Mixite.Xmpp.MessageControllerTest do
         for to_jid <- to_jids do
           ~x[
           <message from="c5f74c1b-11e6-4a81-ab6a-afc598180b5a@mix.example.com"
-                   id="uuid"
+                   id="80"
                    to="#{to_jid}"
                    type="groupchat">
             <body>Hello world!</body>

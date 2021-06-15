@@ -75,7 +75,11 @@ defmodule Mixite.Broadcast do
         type -> type
       end
 
-    message_id = Channel.gen_uuid()
+    message_id =
+      case opts[:id] do
+        nil -> Channel.gen_uuid()
+        id -> id
+      end
 
     case maybe_extra_payload(channel, user_jid, from_jid, payload, opts) do
       :drop ->

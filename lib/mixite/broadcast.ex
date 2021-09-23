@@ -31,6 +31,15 @@ defmodule Mixite.Broadcast do
               Keyword.t()
             ) :: [Xmlel.t()]
 
+
+  @callback filter(
+              Xmlel.t(),
+              Channel.t(),
+              Channel.user_jid(),
+              Channel.user_jid(),
+              Keyword.t()
+            ) :: :drop | Xmlel.t()
+
   @doc """
   Get the backend implementation for Mixite.
 
